@@ -13,7 +13,6 @@ function searchKeyUp( e ) {
 		return search();
 	}
 
-console.log( e.keyCode );
 	if( e.keyCode === 38 || e.keyCode === 40 ) return;
 
 	if( e.target.value.length > 1 ) {
@@ -42,7 +41,6 @@ function search(){
 		var container = document.querySelector( 'ul#search-results ');
 
 		if( data.features ) data.features.forEach( function( feature ) {
-			console.log( feature );
 			container.appendChild( createSearchResult( feature ) );
 		} );
 	} );
