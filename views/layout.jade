@@ -1,0 +1,16 @@
+doctype html
+html
+  head
+    link( rel='stylesheet', href='/stylesheets/style.css' )
+    script( src='/javascripts/ajaxRequest.js' )
+    script( src='/javascripts/viewer.js' )
+  body
+    header#header.header.cf.mainHeader( role="banner" )
+      nav( role="navigation" )
+        ul.menu.cf
+          li
+            a.logo( href="http://transparantnederland.nl" )
+          li.searchHeader
+            input#search
+            button#submit-search zoek
+    block content
