@@ -47,35 +47,16 @@ function search(){
 }
 
 function createSearchResult( feature ) {
-	var element = document.createElement( 'li' ),
-			heading = document.createElement( 'h3' ),
-			anchor = document.createElement( 'a' ),
-			typeContainer = document.createElement( 'p' ),
-			typeLabel = document.createElement( 'label' ),
-			typeText = document.createTextNode( feature.properties.pits[ 0 ].type ),
-			sourceContainer = document.createElement( 'p' ),
-			sourceLabel = document.createElement( 'label' ),
-			sourceText = document.createTextNode( feature.properties.pits[ 0 ].dataset ),
-			dumpContainer = document.createElement( 'p' );
+	var template = document.querySelector( '#searchresult' ),
+			anchor = template.content.querySelector( 'h3 a' ),
+			typeText = template.content.querySelector( 'span.typetext' ),
+			sourceText = template.content.querySelector( 'span.sourcetext' );
 
-	typeLabel.innerText = 'type:';
-	typeContainer.appendChild( typeLabel );
-	typeContainer.appendChild( typeText );
-	sourceLabel.innerText = 'bron:';
-	sourceContainer.appendChild( sourceLabel );
-	sourceContainer.appendChild( sourceText );
+	anchor.textContent = feature.properties.pits[0].name;
+	typeText.textContent = feature.properties.pits[ 0 ].type;
+	sourceText.textContent = feature.properties.pits[ 0 ].dataset;
 
-	anchor.innerHTML = feature.properties.pits[0].name;
-	dumpContainer.innerHTML = JSON.stringify( feature, false, 2 );
-
-	heading.appendChild( anchor );
-	element.appendChild( heading );
-	element.appendChild( typeContainer );
-	element.appendChild( sourceContainer );
-	
-	//element.appendChild( dumpContainer );
-
-	return element;
+	return document.importNode( template.content, true );
 }
 
 function documentReady() {

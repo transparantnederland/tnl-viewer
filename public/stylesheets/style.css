@@ -7,6 +7,12 @@ a {
   color: #00B7FF;
 }
 
-ul{
+/* custom styles */
+
+ul {
 	list-style: none;
+}
+
+span.label {
+	margin-right: 1em;
 }
