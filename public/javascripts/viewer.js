@@ -17,7 +17,7 @@ function searchKeyUp( e ) {
 	if( e.keyCode === 38 || e.keyCode === 40 ) return;
 
 	if( e.target.value.length > 1 ) {
-		ajaxRequest( apiUrl, { q: e.target.value }, function( data ) {
+		ajaxRequest( apiUrl, { q: e.target.value + '*' }, function( data ) {
 			var dataList = document.querySelector( 'datalist#autosuggest' );
 			dataList.innerHTML = '';
 
