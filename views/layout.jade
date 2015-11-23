@@ -26,3 +26,16 @@ html
         p.source
           span.label bron
           span.sourcetext
+
+    template#filtergroup
+      li
+        h3
+        ul
+
+    template#filteritem
+      li
+        input.filter( type="checkbox" )
+        span.name
+        |  (
+        span.count
+        | )

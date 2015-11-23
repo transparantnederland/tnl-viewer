@@ -16,3 +16,7 @@ ul {
 span.label {
 	margin-right: 1em;
 }
+
+.filtertd {
+	vertical-align: top;
+}
