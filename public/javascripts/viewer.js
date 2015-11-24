@@ -77,6 +77,7 @@ function search( append, string ){
 		searchResults = data.features;
 		filteredResults = data.features.slice();
 
+		filters = {}; //reset filters from previous searches
 		updateFilters();
 		applyFilters();
 		showFilters();
@@ -113,7 +114,8 @@ function showFilters() {
 	container.innerText = '';
 	
 	Object.keys( filters ).forEach( function( key ) {
-		container.appendChild( createFilterGroup( key, filters[ key ] ) );
+		var filterGroup = createFilterGroup( key, filters[ key ] );
+		if( filterGroup ) container.appendChild( filterGroup );
 	} );
 }
 
@@ -149,6 +151,8 @@ function createFilterGroup( key, properties ) {
 			return node;
 		}
 	} );
+
+	if( !ul.children.length || ul.children.length === 1 ) return;
 	
 	return node;
 }
@@ -183,6 +187,11 @@ function applyFilters(){
 function showSearchResults(){
 	var container = document.querySelector( 'ul#search-results ');
 	container.innerText = '';
+
+	if( !filteredResults.length ) {
+		container.innerText = 'geen resultaten';
+		return;
+	}
 
 	filteredResults.forEach( function( feature ) {
 		var pit0 = feature.properties.pits[0];
