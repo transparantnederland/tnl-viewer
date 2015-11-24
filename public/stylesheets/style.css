@@ -21,3 +21,7 @@ span.label {
 	vertical-align: top;
 	width: 30%;
 }
+
+.disabled {
+	opacity: 0.333;
+}

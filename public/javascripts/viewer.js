@@ -116,7 +116,6 @@ function createFilterGroup( key, properties ) {
 		if( child ) ul.appendChild( child );
 
 		function createFilterItem( name, info ) {
-			if( !info.count ) return;
 
 			var template = document.querySelector( '#filteritem' ),
 					node = document.importNode( template.content, true ),
@@ -128,6 +127,11 @@ function createFilterGroup( key, properties ) {
 
 			node.querySelector( '.name' ).textContent = name;
 			node.querySelector( '.count' ).textContent = info.count;
+
+			if( !info.count ) {
+				node.children[ 0 ].classList.add( 'disabled' );
+				input.disabled = 'disabled';
+			}
 
 			return node;
 		}
