@@ -27,9 +27,9 @@ function hashChange( e ) {
 }
 
 function handleHash( hash ) {
-	if( !hash.length ) {
-		document.dispatchEvent( new Event('clear') );
-	} else {
+	document.dispatchEvent( new Event('clear') );
+
+	if( hash.length ) {
 		var parts = hash.split('/');
 		if( routeHandlers[ parts[ 0 ] ] ) {
 			return routeHandlers[ parts.shift() ]( parts );

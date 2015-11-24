@@ -2,11 +2,14 @@ var apiUrl = '//transparantnederland.nl:3001/search';
 
 document.addEventListener( 'clear', clear );
 
-eventHandlers[ 'input#search' ] = { keyup: searchKeyUp };
-eventHandlers['button#submit-search'] = { click: search };
+eventHandlers[ 'input#search' ] = {
+	keyup: searchKeyUp,
+	blur: searchBlur
+};
 eventHandlers[ 'input[type=checkbox].filter' ] = { change: toggleFilter };
 
-routeHandlers[ 'pit' ] = pitHandler;
+routeHandlers.pit = pitHandler;
+routeHandlers.search = searchHandler;
 
 function clear() {
 	document.querySelector( 'td.filtertd ul' ).innerText = '';
@@ -44,6 +47,10 @@ function searchKeyUp( e ) {
 	}
 }
 
+function searchBlur() {
+	location.hash = 'search/' + makeSafe( document.querySelector( 'input#search' ).value );
+}
+
 function toggleFilter( e ) {
 	var key = this.dataset.filterkey,
 			value = this.dataset.filtervalue,
@@ -65,8 +72,8 @@ var filterableProperties = [
 		searchResults,
 		filteredResults;
 
-function search( append ){
-	ajaxRequest( apiUrl, { q: document.querySelector( 'input#search' ).value + ( append ? append : '' ) }, function( data ) {
+function search( append, string ){
+	ajaxRequest( apiUrl, { q: ( string || document.querySelector( 'input#search' ).value ) + ( append ? append : '' ) }, function( data ) {
 		searchResults = data.features;
 		filteredResults = data.features.slice();
 
@@ -206,6 +213,11 @@ function pitHandler( routeParts ) {
 	if( routeParts.length === 1 ){
 		getPit( pitId, showPit );
 	}
+}
+
+function searchHandler( routeParts ) {
+	var searchQuery = makeUri( routeParts.pop() );
+	search( '*', searchQuery );
 }
 
 function getPit( pitId, cb ) {
