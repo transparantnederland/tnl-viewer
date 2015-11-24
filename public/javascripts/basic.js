@@ -2,6 +2,10 @@ var boundDelegates = {},
     eventHandlers = {},
     routeHandlers = {};
 
+document.addEventListener( 'DOMContentLoaded', documentReady );
+
+window.addEventListener( 'hashchange', hashChange );
+
 function documentReady() {
 	initEventHandlers();
 
@@ -24,11 +28,7 @@ function hashChange( e ) {
 
 function handleHash( hash ) {
 	if( !hash.length ) {
-		//reset view
-		document.querySelector( 'td.filtertd ul' ).innerText = '';
-		document.querySelector( 'td.search-results ul' ).innerText = '';
-		document.querySelector( '#pitcontainer' ).innerText = '';
-		document.querySelector( 'input#search' ).value = '';
+		document.dispatchEvent( new Event('clear') );
 	} else {
 		var parts = hash.split('/');
 		if( routeHandlers[ parts[ 0 ] ] ) {

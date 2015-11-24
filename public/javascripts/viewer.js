@@ -1,14 +1,19 @@
 var apiUrl = '//transparantnederland.nl:3001/search';
 
-document.addEventListener( 'DOMContentLoaded', documentReady );
-
-window.addEventListener( 'hashchange', hashChange );
+document.addEventListener( 'clear', clear );
 
 eventHandlers[ 'input#search' ] = { keyup: searchKeyUp };
 eventHandlers['button#submit-search'] = { click: search };
 eventHandlers[ 'input[type=checkbox].filter' ] = { change: toggleFilter };
 
 routeHandlers[ 'pit' ] = pitHandler;
+
+function clear() {
+	document.querySelector( 'td.filtertd ul' ).innerText = '';
+	document.querySelector( 'td.search-results ul' ).innerText = '';
+	document.querySelector( '#pitcontainer' ).innerText = '';
+	document.querySelector( 'input#search' ).value = '';
+}
 
 function searchKeyUp( e ) {
 	if( e.keyCode === 13 ) {
