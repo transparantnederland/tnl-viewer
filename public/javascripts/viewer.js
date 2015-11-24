@@ -1,13 +1,18 @@
 var apiUrl = '//transparantnederland.nl:3001/search',
 		boundDelegates = {},
     eventHandlers = {},
+    routeHandlers = {},
 		searchField;
 
 document.addEventListener( 'DOMContentLoaded', documentReady );
 
+window.addEventListener( 'hashchange', hashChange );
+
 eventHandlers[ 'input#search' ] = { keyup: searchKeyUp };
 eventHandlers['button#submit-search'] = { click: search };
 eventHandlers[ 'input[type=checkbox].filter' ] = { change: toggleFilter };
+
+routeHandlers[ 'pit' ] = pitHandler;
 
 function searchKeyUp( e ) {
 	if( e.keyCode === 13 ) {
@@ -17,6 +22,7 @@ function searchKeyUp( e ) {
 	if( e.keyCode === 38 || e.keyCode === 40 ) return;
 
 	if( e.target.value.length > 1 ) {
+		return search( '*' );
 		ajaxRequest( apiUrl, { q: e.target.value + '*' }, function( data ) {
 			var dataList = document.querySelector( 'datalist#autosuggest' );
 			dataList.innerHTML = '';
@@ -52,15 +58,14 @@ function toggleFilter( e ) {
 
 var filterableProperties = [
 			'type',
-			'dataset',
-			'name'
+			'dataset'
 		],
 		filters = {},
 		searchResults,
 		filteredResults;
 
-function search(){
-	ajaxRequest( apiUrl, { q: document.querySelector( 'input#search' ).value }, function( data ) {
+function search( append ){
+	ajaxRequest( apiUrl, { q: document.querySelector( 'input#search' ).value + ( append ? append : '' ) }, function( data ) {
 		searchResults = data.features;
 		filteredResults = data.features.slice();
 
@@ -180,21 +185,91 @@ function showSearchResults(){
 
 function createSearchResult( pit ) {
 	var template = document.querySelector( '#searchresult' ),
-			node = document.importNode( template.content, true );
+			node = document.importNode( template.content, true ),
+			anchor = node.querySelector( 'h3 a' );
 
-	node.querySelector( 'h3 a' ).textContent = pit.name;
+	anchor.textContent = pit.name;
+	anchor.href = '#' + 'pit/' + makeSafe( pit.id );
 	node.querySelector( 'span.typetext' ).textContent = pit.type;
 	node.querySelector( 'span.sourcetext' ).textContent = pit.dataset;
 
 	return node;
 }
 
-function documentReady() {
-	console.log('document ready!');
+function makeSafe( uri ) {
+	return uri.replace( '/', '\\' );
+}
 
+function makeUri( string ) {
+	return string.replace( '\\', '/' );
+}
+
+function documentReady() {
 	initEventHandlers();
 
 	searchField = document.getElementById('search');
+
+	if( location.hash ) handleHash( location.hash.substring( 1 ) );
+}
+
+function hashChange( e ) {
+	var hash = location.hash.substring( 1 );
+	handleHash( hash );
+}
+
+function handleHash( hash ) {
+	if( !hash.length ) {
+		//reset view
+		document.querySelector( 'td.filtertd' ).innerText = '';
+		document.querySelector( 'td.search-results' ).innerText = '';
+		document.querySelector( '#pitcontainer' ).innerText = '';
+		document.querySelector( 'input#search' ).value = '';
+	} else {
+		var parts = hash.split('/');
+		if( routeHandlers[ parts[ 0 ] ] ) {
+			return routeHandlers[ parts.shift() ]( parts );
+		}
+	}
+}
+
+function pitHandler( routeParts ) {
+	// get back the original pit uri
+	var pitId = routeParts[ 0 ] = makeUri( routeParts[ 0 ] );
+
+	if( routeParts.length === 1 ){
+		getPit( pitId, showPit );
+	}
+}
+
+function getPit( pitId, cb ) {
+	ajaxRequest( 'http://transparantnederland.nl:3001/search', { id: pitId }, function( data ) {
+		if( data && data.features && data.features.length ) {
+			cb( null, data.features[ 0 ] );
+		} else {
+			cb( 'an error has occurred' );
+		}
+	} );
+}
+
+function showPit( err, feature ) {
+	if( err ) showError( err );
+	document.querySelector( 'input#search' ).value = '';
+
+	var template = document.querySelector( '#pit' ),
+			node = document.importNode( template.content, true ),
+			pit0 = feature.properties.pits[ 0 ],
+			pitContainer = document.querySelector( '#pitcontainer' );
+
+	if( !pit0 ) return showError( 'no pit found' );
+
+	node.querySelector( 'h2' ).textContent = pit0.name;
+	node.querySelector( 'span.sourcetext' ).textContent = pit0.dataset;
+
+	pitContainer.innerText = '';
+	document.querySelector( 'td.filtertd' ).innerText = '';
+	document.querySelector( 'td.search-results' ).innerText = '';
+
+	pitContainer.appendChild( node );
 }
 
 function initEventHandlers(){
