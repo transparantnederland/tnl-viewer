@@ -25,8 +25,8 @@ function hashChange( e ) {
 function handleHash( hash ) {
 	if( !hash.length ) {
 		//reset view
-		document.querySelector( 'td.filtertd' ).innerText = '';
-		document.querySelector( 'td.search-results' ).innerText = '';
+		document.querySelector( 'td.filtertd ul' ).innerText = '';
+		document.querySelector( 'td.search-results ul' ).innerText = '';
 		document.querySelector( '#pitcontainer' ).innerText = '';
 		document.querySelector( 'input#search' ).value = '';
 	} else {

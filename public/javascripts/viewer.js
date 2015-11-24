@@ -228,8 +228,8 @@ function showPit( err, feature ) {
 	node.querySelector( 'span.sourcetext' ).textContent = pit0.dataset;
 
 	pitContainer.innerText = '';
-	document.querySelector( 'td.filtertd' ).innerText = '';
-	document.querySelector( 'td.search-results' ).innerText = '';
+	document.querySelector( 'td.filtertd ul' ).innerText = '';
+	document.querySelector( 'td.search-results ul' ).innerText = '';
 
 	pitContainer.appendChild( node );
 }
