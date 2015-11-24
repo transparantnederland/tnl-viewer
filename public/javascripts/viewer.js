@@ -111,7 +111,7 @@ function updateFilters() {
 
 function showFilters() {
 	var container = document.querySelector( 'ul#filtercontainer' );
-	container.innerText = '';
+	container.innerHTML = '<h3>filter de resultaten:</h3>';
 	
 	Object.keys( filters ).forEach( function( key ) {
 		var filterGroup = createFilterGroup( key, filters[ key ] );
