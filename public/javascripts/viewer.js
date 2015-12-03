@@ -1,4 +1,4 @@
-var apiUrl = '//transparantnederland.nl:3001/search';
+var apiUrl = '//api.transparantnederland.nl/search';
 
 document.addEventListener( 'clear', clear );
 
@@ -73,16 +73,20 @@ var filterableProperties = [
 		filteredResults;
 
 function search( append, string ){
-	ajaxRequest( apiUrl, { q: ( string || document.querySelector( 'input#search' ).value ) + ( append ? append : '' ) }, function( data ) {
-		searchResults = data.features;
-		filteredResults = data.features.slice();
+	ajaxRequest(
+		apiUrl,
+		{ q: ( string || document.querySelector( 'input#search' ).value ) + ( append ? append : '' ) },
+		function( results ) {
+			searchResults = results;
+			filteredResults = searchResults;
 
-		filters = {}; //reset filters from previous searches
-		updateFilters();
-		applyFilters();
-		showFilters();
-		showSearchResults();
-	} );
+			filters = {}; //reset filters from previous searches
+			updateFilters();
+			applyFilters();
+			showFilters();
+			showSearchResults();
+		}
+	);
 }
 
 function updateFilters() {
@@ -93,9 +97,8 @@ function updateFilters() {
 			list[ key ].count = 0; //reset count
 		} );
 
-		filteredResults.forEach( function( feature ) {
-			var pit0 = feature.properties.pits[0],
-					value = pit0[ key ],
+		filteredResults.forEach( function( pit ) {
+			var value = pit[ key ],
 					item = list[ value ],
 					storedValue;
 
@@ -172,12 +175,12 @@ function applyFilters(){
 		if( !allowedPropertiesByKey[ key ].length ) delete allowedPropertiesByKey[ key ];
 	} );
 
-	filteredResults = searchResults.filter( function( feature ) {
+	filteredResults = searchResults.filter( function( pit ) {
 		var filtered = false;
 
 		Object.keys( allowedPropertiesByKey ).forEach( function( key ){
 			var list = allowedPropertiesByKey[ key ];
-			filtered = filtered || list.indexOf( feature.properties.pits[ 0 ][ key ] ) === -1;
+			filtered = filtered || list.indexOf( pit[ key ] ) === -1;
 		} );
 
 		return !filtered;
@@ -193,10 +196,8 @@ function showSearchResults(){
 		return;
 	}
 
-	filteredResults.forEach( function( feature ) {
-		var pit0 = feature.properties.pits[0];
-		
-		container.appendChild( createSearchResult( pit0 ) );
+	filteredResults.forEach( function( pit ) {
+		container.appendChild( createSearchResult( pit ) );
 	} );
 }
 
@@ -230,28 +231,31 @@ function searchHandler( routeParts ) {
 }
 
 function getPit( pitId, cb ) {
-	ajaxRequest( 'http://transparantnederland.nl:3001/search', { id: pitId }, function( data ) {
-		if( data && data.features && data.features.length ) {
-			cb( null, data.features[ 0 ] );
-		} else {
-			cb( 'an error has occurred' );
+	ajaxRequest(
+		apiUrl,
+		{ id: pitId },
+		function( pits ) {
+			if( pits && pits.length ) {
+				cb( null, pits[ 0 ] );
+			} else {
+				cb( 'an error has occurred' );
+			}
 		}
-	} );
+	);
 }
 
-function showPit( err, feature ) {
+function showPit( err, pit ) {
 	if( err ) showError( err );
 	document.querySelector( 'input#search' ).value = '';
 
 	var template = document.querySelector( '#pit' ),
 			node = document.importNode( template.content, true ),
-			pit0 = feature.properties.pits[ 0 ],
 			pitContainer = document.querySelector( '#pitcontainer' );
 
-	if( !pit0 ) return showError( 'no pit found' );
+	if( !pit ) return showError( 'no pit found' );
 
-	node.querySelector( 'h2' ).textContent = pit0.name;
-	node.querySelector( 'span.sourcetext' ).textContent = pit0.dataset;
+	node.querySelector( 'h2' ).textContent = pit.name;
+	node.querySelector( 'span.sourcetext' ).textContent = pit.dataset;
 
 	pitContainer.innerText = '';
 	document.querySelector( 'td.filtertd ul' ).innerText = '';

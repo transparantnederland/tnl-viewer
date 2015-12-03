@@ -20,7 +20,7 @@ function ajaxRequest(url, method, query, callback){
 		if(e.target.readyState === 4) {
 			response = e.target.response;
 
-			if( response[ 0 ] === '{' ) {
+			if( response[ 0 ] === '{' || response[ 0 ] === '[' ) {
 				try{
 					response = JSON.parse( response );
 				} catch( e ) {
