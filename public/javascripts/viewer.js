@@ -1,4 +1,4 @@
-var apiUrl = '//api.transparantnederland.nl/search';
+var apiUrl = '//api.transparantnederland.nl/';
 
 document.addEventListener( 'clear', clear );
 
@@ -48,7 +48,11 @@ function searchKeyUp( e ) {
 }
 
 function searchBlur() {
-	location.hash = 'search/' + makeSafe( document.querySelector( 'input#search' ).value );
+	var value = document.querySelector( 'input#search' ).value,
+			safeValue = makeSafe( value ),
+			hash = 'search/' + safeValue;
+	if( !value || location.hash === hash ) return;
+	location.hash = hash;
 }
 
 function toggleFilter( e ) {
@@ -74,7 +78,7 @@ var filterableProperties = [
 
 function search( append, string ){
 	ajaxRequest(
-		apiUrl,
+		apiUrl + 'search',
 		{ q: ( string || document.querySelector( 'input#search' ).value ) + ( append ? append : '' ) },
 		function( results ) {
 			searchResults = results;
@@ -230,13 +234,29 @@ function searchHandler( routeParts ) {
 	search( '*', searchQuery );
 }
 
+function clearScreen() {
+	document.querySelector( '#pitcontainer' ).innerText = '';
+	document.querySelector( 'td.filtertd ul' ).innerText = '';
+	document.querySelector( 'td.search-results ul' ).innerText = '';
+}
+
 function getPit( pitId, cb ) {
 	ajaxRequest(
-		apiUrl,
+		apiUrl + 'search',
 		{ id: pitId },
 		function( pits ) {
 			if( pits && pits.length ) {
-				cb( null, pits[ 0 ] );
+
+				var pit = pits[ 0 ],
+						enrichRoute = pit.type === 'tnl:Person' ? 'orgsFromPerson' : 'peopleFromOrg';
+
+				return ajaxRequest(
+					apiUrl + enrichRoute,
+					{ id: pit.id },
+					function( relatedPits ) {
+						cb( null, pit, relatedPits );
+					}
+				);
 			} else {
 				cb( 'an error has occurred' );
 			}
@@ -244,22 +264,35 @@ function getPit( pitId, cb ) {
 	);
 }
 
-function showPit( err, pit ) {
+function showPit( err, pit, relatedPits ) {
 	if( err ) showError( err );
 	document.querySelector( 'input#search' ).value = '';
 
 	var template = document.querySelector( '#pit' ),
 			node = document.importNode( template.content, true ),
-			pitContainer = document.querySelector( '#pitcontainer' );
+			tbody = node.querySelector( 'table.related-pits tbody' ),
+			relatedRowTemplate = document.querySelector( '#relation' );
 
 	if( !pit ) return showError( 'no pit found' );
 
 	node.querySelector( 'h2' ).textContent = pit.name;
 	node.querySelector( 'span.sourcetext' ).textContent = pit.dataset;
 
-	pitContainer.innerText = '';
-	document.querySelector( 'td.filtertd ul' ).innerText = '';
-	document.querySelector( 'td.search-results ul' ).innerText = '';
+	node.querySelector( 'table.related-pits thead td.type' ).innerText = pit.type = 'tnl:Person' ? 'Organisatie' : 'Persoon';
 
-	pitContainer.appendChild( node );
+	relatedPits.forEach( function( relatedPit ) {
+		var node = document.importNode( relatedRowTemplate.content, true ),
+				anchor = node.querySelector( 'td.name a' );
+
+		anchor.innerText = relatedPit.name;
+		anchor.href = '#pit/' + makeSafe( relatedPit.id );
+
+		console.log( relatedPit );
+
+		tbody.appendChild( node );
+	} );
+
+	clearScreen();
+
+	document.querySelector( '#pitcontainer' ).appendChild( node );
 }
