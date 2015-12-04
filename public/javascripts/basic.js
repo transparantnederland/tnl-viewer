@@ -21,6 +21,10 @@ function makeUri( string ) {
 	return string.replace( '\\', '/' );
 }
 
+function replaceHash( newHash, suppress ) {
+	if( suppress ) ignoreHashChange = true;
+	location.hash = newHash;
+}
 
 function hashChange( e ) {
 	var hash = location.hash.substring( 1 );

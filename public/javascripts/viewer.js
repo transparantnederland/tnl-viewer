@@ -53,8 +53,8 @@ function searchBlur() {
 			hash = 'search/' + safeValue;
 
 	if( !value || location.hash === hash ) return;
-	ignoreHashChange = true;
-	location.hash = hash;
+
+	replaceHash( hash, true );
 }
 
 function toggleFilter( e ) {
@@ -224,7 +224,21 @@ function pitHandler( routeParts ) {
 	var pitId = routeParts[ 0 ] = makeUri( routeParts[ 0 ] );
 
 	if( routeParts.length === 1 ){
-		getPit( pitId, showPit );
+		getPit( pitId, function( err, pit ) {
+			getRelations( pit, function( err, relatedPits ) {
+				showPit( err, pit, relatedPits );
+			} );
+		} );
+	} else if( routeParts[ 1 ] === 'network' ) {
+		getPit( pitId, function( err, pit ) {
+			ajaxRequest(
+				apiUrl + 'peopleFromOrgsFromPerson',
+				{ id: pitId },
+				function( network ) {
+					showNetwork( null, pit, network );
+				}
+			);
+		} );
 	}
 }
 
@@ -245,20 +259,22 @@ function getPit( pitId, cb ) {
 		{ id: pitId },
 		function( pits ) {
 			if( pits && pits.length ) {
-
-				var pit = pits[ 0 ],
-						enrichRoute = pit.type === 'tnl:Person' ? 'orgsFromPerson' : 'peopleFromOrg';
-
-				return ajaxRequest(
-					apiUrl + enrichRoute,
-					{ id: pit.id },
-					function( relatedPits ) {
-						cb( null, pit, relatedPits );
-					}
-				);
+				cb( null, pits[ 0 ] );
 			} else {
 				cb( 'an error has occurred' );
 			}
+		}
+	);
+}
+
+function getRelations( pit, cb ) {
+	var enrichRoute = pit.type === 'tnl:Person' ? 'orgsFromPerson' : 'peopleFromOrg';
+
+	return ajaxRequest(
+		apiUrl + enrichRoute,
+		{ id: pit.id },
+		function( relatedPits ) {
+			cb( null, relatedPits );
 		}
 	);
 }
@@ -270,7 +286,7 @@ function showPit( err, pit, relatedPits ) {
 	var template = document.querySelector( '#pit' ),
 			node = document.importNode( template.content, true ),
 			tbody = node.querySelector( 'table.related-pits tbody' ),
-			relatedRowTemplate = document.querySelector( '#relation' );
+			allRelations;
 
 	if( !pit ) return showError( 'no pit found' );
 
@@ -280,16 +296,45 @@ function showPit( err, pit, relatedPits ) {
 	node.querySelector( 'table.related-pits thead td.type' ).innerText = pit.type === 'tnl:Person' ? 'Organisatie' : 'Persoon';
 
 	relatedPits.forEach( function( relatedPit ) {
-		var node = document.importNode( relatedRowTemplate.content, true ),
-				anchor = node.querySelector( 'td.name a' );
+		tbody.appendChild( makeRelatedPitRow( relatedPit ) );
+	} );
 
-		anchor.innerText = relatedPit.name;
-		anchor.href = '#pit/' + makeSafe( relatedPit.id );
+	if( pit.type === 'tnl:Person' ) {
+		allRelations = node.querySelector( 'a.all-relations' );
+		allRelations.innerText = 'alle relaties tonen';
+		allRelations.href = location.hash + '/network';
+	}
 
-		tbody.appendChild( node );
+	clearScreen();
+
+	document.querySelector( '#pitcontainer' ).appendChild( node );
+}
+
+function showNetwork( err, pit, relatedPits ) {
+	if( err ) return showError( err );
+	
+	var template = document.querySelector( '#network' ),
+			node = document.importNode( template.content, true ),
+			tbody = node.querySelector( 'table.related-pits tbody' );
+
+	node.querySelector( 'h2' ).innerText = pit.name;
+
+	relatedPits.forEach( function( relatedPit ) {
+		tbody.appendChild( makeRelatedPitRow( relatedPit ) );
 	} );
 
 	clearScreen();
 
 	document.querySelector( '#pitcontainer' ).appendChild( node );
+}
+
+function makeRelatedPitRow( relatedPit ) {
+	var relatedRowTemplate = document.querySelector( '#relation' ),
+			node = document.importNode( relatedRowTemplate.content, true ),
+			anchor = node.querySelector( 'td.name a' );
+
+	anchor.innerText = relatedPit.name;
+	anchor.href = '#pit/' + makeSafe( relatedPit.id );
+
+	return node;
 }
