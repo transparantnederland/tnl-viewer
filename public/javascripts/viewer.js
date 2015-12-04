@@ -51,7 +51,9 @@ function searchBlur() {
 	var value = document.querySelector( 'input#search' ).value,
 			safeValue = makeSafe( value ),
 			hash = 'search/' + safeValue;
+
 	if( !value || location.hash === hash ) return;
+	ignoreHashChange = true;
 	location.hash = hash;
 }
 
@@ -77,9 +79,11 @@ var filterableProperties = [
 		filteredResults;
 
 function search( append, string ){
+	var searchString = ( string || document.querySelector( 'input#search' ).value ) + ( append ? append : '' );
+
 	ajaxRequest(
 		apiUrl + 'search',
-		{ q: ( string || document.querySelector( 'input#search' ).value ) + ( append ? append : '' ) },
+		{ q: searchString },
 		function( results ) {
 			searchResults = results;
 			filteredResults = searchResults;
@@ -149,11 +153,6 @@ function createFilterGroup( key, properties ) {
 
 			node.querySelector( '.name' ).textContent = name;
 			node.querySelector( '.count' ).textContent = info.count;
-
-			if( !info.count ) {
-				node.children[ 0 ].classList.add( 'disabled' );
-				input.disabled = 'disabled';
-			}
 
 			return node;
 		}
@@ -265,7 +264,7 @@ function getPit( pitId, cb ) {
 }
 
 function showPit( err, pit, relatedPits ) {
-	if( err ) showError( err );
+	if( err ) return showError( err );
 	document.querySelector( 'input#search' ).value = '';
 
 	var template = document.querySelector( '#pit' ),
@@ -278,7 +277,7 @@ function showPit( err, pit, relatedPits ) {
 	node.querySelector( 'h2' ).textContent = pit.name;
 	node.querySelector( 'span.sourcetext' ).textContent = pit.dataset;
 
-	node.querySelector( 'table.related-pits thead td.type' ).innerText = pit.type = 'tnl:Person' ? 'Organisatie' : 'Persoon';
+	node.querySelector( 'table.related-pits thead td.type' ).innerText = pit.type === 'tnl:Person' ? 'Organisatie' : 'Persoon';
 
 	relatedPits.forEach( function( relatedPit ) {
 		var node = document.importNode( relatedRowTemplate.content, true ),
@@ -286,8 +285,6 @@ function showPit( err, pit, relatedPits ) {
 
 		anchor.innerText = relatedPit.name;
 		anchor.href = '#pit/' + makeSafe( relatedPit.id );
-
-		console.log( relatedPit );
 
 		tbody.appendChild( node );
 	} );

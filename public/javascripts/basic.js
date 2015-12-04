@@ -1,6 +1,7 @@
 var boundDelegates = {},
     eventHandlers = {},
-    routeHandlers = {};
+    routeHandlers = {},
+    ignoreHashChange = false;
 
 document.addEventListener( 'DOMContentLoaded', documentReady );
 
@@ -23,7 +24,8 @@ function makeUri( string ) {
 
 function hashChange( e ) {
 	var hash = location.hash.substring( 1 );
-	handleHash( hash );
+	if( !ignoreHashChange ) handleHash( hash );
+	ignoreHashChange = false;
 }
 
 function handleHash( hash ) {
@@ -75,6 +77,6 @@ function initEventHandlers(){
       function evaluateHandler( nodeSelector ){
         if( target.matches && target.matches( nodeSelector ) ) return delegates[nodeSelector].call( target, e );
       }
-    }
+    };
   }
 }
