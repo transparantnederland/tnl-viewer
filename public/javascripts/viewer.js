@@ -13,8 +13,7 @@ routeHandlers.search = searchHandler;
 
 function clear() {
 	document.querySelector( 'td.filtertd ul' ).innerText = '';
-	document.querySelector( 'td.search-results ul' ).innerText = '';
-	document.querySelector( '#pitcontainer' ).innerText = '';
+	document.querySelector( 'td.result' ).innerText = '';
 	document.querySelector( 'input#search' ).value = '';
 }
 
@@ -27,23 +26,6 @@ function searchKeyUp( e ) {
 
 	if( e.target.value.length > 1 ) {
 		return search( '*' );
-		ajaxRequest( apiUrl, { q: e.target.value + '*' }, function( data ) {
-			var dataList = document.querySelector( 'datalist#autosuggest' );
-			dataList.innerHTML = '';
-
-			if( data.features ) {
-				data.features.forEach( function( feature ) {
-					var firstPit = feature.properties.pits[ 0 ],
-							name = firstPit && firstPit.name,
-							option = document.createElement( 'option' );
-
-					if( name ) {
-						option.value = name;
-						dataList.appendChild( option );
-					}
-				} );
-			}
-		} );
 	}
 }
 
@@ -191,8 +173,11 @@ function applyFilters(){
 }
 
 function showSearchResults(){
-	var container = document.querySelector( 'ul#search-results ');
+	var container = document.querySelector( 'td.result');
 	container.innerText = '';
+
+	var ul = document.createElement( 'ul' );
+	ul.id = 'search-results';
 
 	if( !filteredResults.length ) {
 		container.innerText = 'geen resultaten';
@@ -200,8 +185,10 @@ function showSearchResults(){
 	}
 
 	filteredResults.forEach( function( pit ) {
-		container.appendChild( createSearchResult( pit ) );
+		ul.appendChild( createSearchResult( pit ) );
 	} );
+
+	container.appendChild( ul );
 }
 
 function createSearchResult( pit ) {
@@ -248,9 +235,8 @@ function searchHandler( routeParts ) {
 }
 
 function clearScreen() {
-	document.querySelector( '#pitcontainer' ).innerText = '';
 	document.querySelector( 'td.filtertd ul' ).innerText = '';
-	document.querySelector( 'td.search-results ul' ).innerText = '';
+	document.querySelector( 'td.result' ).innerText = '';
 }
 
 function getPit( pitId, cb ) {
@@ -307,7 +293,7 @@ function showPit( err, pit, relatedPits ) {
 
 	clearScreen();
 
-	document.querySelector( '#pitcontainer' ).appendChild( node );
+	document.querySelector( 'table#search-table td.result' ).appendChild( node );
 }
 
 function showNetwork( err, pit, relatedPits ) {
@@ -325,7 +311,7 @@ function showNetwork( err, pit, relatedPits ) {
 
 	clearScreen();
 
-	document.querySelector( '#pitcontainer' ).appendChild( node );
+	document.querySelector( 'table#search-table td.result' ).appendChild( node );
 }
 
 function makeRelatedPitRow( relatedPit ) {
