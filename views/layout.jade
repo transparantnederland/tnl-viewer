@@ -40,12 +40,23 @@ html
         span.count
         | )
 
+    template#dataset
+      .dataset
+        h2
+        p.author
+        p.description
+        p.date
+        p.website
+          a
+
     template#pit
       .pit
         h2
         p
           span.label bron:
-          span.sourcetext
+          a.sourcetext
+        table.properties
+          tbody
         h3
           a.all-relations
         h3 Relaties
@@ -56,6 +67,11 @@ html
               td.relation relatie
               td.period periode
           tbody
+
+    template#property
+      tr
+        td.property-name
+        td.property-value
 
     template#relation
       tr
