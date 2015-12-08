@@ -311,7 +311,7 @@ function showPit( err, pit, relatedPits ) {
 		if( key === 'data' ) return Object.keys( parent.data ).forEach( arguments.callee.bind( null, parent.data ) );
 
 		node.querySelector( 'td.property-name' ).innerText = key;
-		node.querySelector( 'td.property-value' ).innerHTML = value;
+		node.querySelector( 'td.property-value' ).innerHTML = /^http/.exec( value ) ? '<a href="' + value + '">' + value + '</a>' : value;
 
 		propertiesTBody.appendChild( node );
 	}.bind(null, pit) );
@@ -352,7 +352,6 @@ function showNetwork( err, pit, relatedPits ) {
 }
 
 function showDataset( dataset ) {
-	console.log( dataset );
 	var template = document.querySelector( '#dataset' ),
 			node = document.importNode( template.content, true ),
 			anchor = node.querySelector( '.website a' );
