@@ -84,8 +84,8 @@ function updateFilters() {
 	filterableProperties.forEach( function( key ) {
 		var list = filters[ key ] = filters[ key ] || {};
 
-		Object.keys( list ).forEach( function( key ) {
-			list[ key ].count = 0; //reset count
+		list.forEach( function( key, item ) {
+			item.count = 0; //reset count
 		} );
 
 		filteredResults.forEach( function( pit ) {
@@ -107,55 +107,45 @@ function showFilters() {
 	var container = document.querySelector( 'ul#filtercontainer' );
 	container.innerHTML = '<h3>filter de resultaten:</h3>';
 	
-	Object.keys( filters ).forEach( function( key ) {
-		var filterGroup = createFilterGroup( key, filters[ key ] );
+	filters.forEach( function( key, filter ) {
+		var filterGroup = createFilterGroup( key, filter );
 		if( filterGroup ) container.appendChild( filterGroup );
 	} );
 }
 
 function createFilterGroup( key, properties ) {
-	var	template = document.querySelector( '#filtergroup' ),
-			node = document.importNode( template.content, true ),
-			ul = node.querySelector( 'ul' );
+	var items = properties.map( function( name, info ) {
+				return {
+					'input': {
+						'checked': info.value || '',
+						'data-filterkey': key,
+						'data-filtervalue': name
+					},
+					'.name': name,
+					'.count': info.count
+				};
+			} ),
+			filterGroupElement = instantiateTemplate( '#filtergroup', {
+				'h3': key,
+				'ul': {
+					template: '#filteritem',
+					list: items
+				}
+			} );
 
-	node.querySelector( 'h3' ).textContent = key;
-
-	Object.keys( properties ).forEach( function( name ) {
-		var child = createFilterItem( name, properties[ name ] );
-		if( child ) ul.appendChild( child );
-
-		function createFilterItem( name, info ) {
-
-			var template = document.querySelector( '#filteritem' ),
-					node = document.importNode( template.content, true ),
-					input = node.querySelector( 'input' );
-			
-			input.checked = info.value ? 'checked' : '';
-			input.dataset.filterkey = key;
-			input.dataset.filtervalue = name;
-
-			node.querySelector( '.name' ).textContent = name;
-			node.querySelector( '.count' ).textContent = info.count;
-
-			return node;
-		}
-	} );
-
-	if( !ul.children.length || ul.children.length === 1 ) return;
+	if( filterGroupElement.querySelector( 'ul' ).children.length < 2 ) return;
 	
-	return node;
+	return filterGroupElement;
 }
 
 function applyFilters(){
 	var allowedPropertiesByKey = {};
 	
-	Object.keys( filters ).forEach( function( key ) {
-		var list = filters[ key ];
-
+	filters.forEach( function( key, list ) {
 		allowedPropertiesByKey[ key ] = [];
 
-		Object.keys( list ).forEach( function( property ) {
-			if( list[ property ].value ) allowedPropertiesByKey[ key ].push( property );
+		list.forEach( function( property, item ) {
+			if( item.value ) allowedPropertiesByKey[ key ].push( property );
 		} );
 
 		if( !allowedPropertiesByKey[ key ].length ) delete allowedPropertiesByKey[ key ];
@@ -164,8 +154,7 @@ function applyFilters(){
 	filteredResults = searchResults.filter( function( pit ) {
 		var filtered = false;
 
-		Object.keys( allowedPropertiesByKey ).forEach( function( key ){
-			var list = allowedPropertiesByKey[ key ];
+		allowedPropertiesByKey.forEach( function( key, list ){
 			filtered = filtered || list.indexOf( pit[ key ] ) === -1;
 		} );
 
@@ -186,26 +175,22 @@ function showSearchResults(){
 	}
 
 	filteredResults.forEach( function( pit ) {
-		ul.appendChild( createSearchResult( pit ) );
+		//ul.appendChild( createSearchResult( pit ) );
+		ul.appendChild( instantiateTemplate( '#searchresult', {
+			'h3 a': {
+				textContent: pit.name,
+				href: '#pit/' + makeSafe( pit.id )
+			},
+			'span.sourcetext a': {
+				textContent: pit.dataset,
+				href: pit.dataset
+			},
+			'span.typetext': pit.type
+		} ) );
 	} );
 
 	container.appendChild( ul );
 }
-
-function createSearchResult( pit ) {
-	var template = document.querySelector( '#searchresult' ),
-			node = document.importNode( template.content, true ),
-			anchor = node.querySelector( 'h3 a' );
-
-	anchor.textContent = pit.name;
-	anchor.href = '#' + 'pit/' + makeSafe( pit.id );
-	node.querySelector( 'span.typetext' ).textContent = pit.type;
-	node.querySelector( 'span.sourcetext' ).textContent = pit.dataset;
-
-	return node;
-}
-
-
 
 function pitHandler( routeParts ) {
 	// get back the original pit uri
@@ -289,91 +274,93 @@ function showPit( err, pit, relatedPits ) {
 	if( err ) return showError( err );
 	document.querySelector( 'input#search' ).value = '';
 
-	var template = document.querySelector( '#pit' ),
-			node = document.importNode( template.content, true ),
-			datasetAnchor = node.querySelector( 'a.sourcetext' ),
-			propertiesTBody = node.querySelector( 'table.properties tbody' ),
-			relationsTBody = node.querySelector( 'table.related-pits tbody' ),
-			allRelations;
+	var propertiesList = [];
 
-	if( !pit ) return showError( 'no pit found' );
+	pit.forEach( makeTemplateInstructionForProperty );
 
-	node.querySelector( 'h2' ).innerText = pit.name;
-	datasetAnchor.innerText = pit.dataset;
-	datasetAnchor.href = '#dataset/' + pit.dataset;
-
-	Object.keys( pit ).forEach( function( parent, key ) {
-		if( pitPropertiesBlacklist.indexOf( key ) > -1 ) return;
-
-		var node = document.importNode( document.querySelector( '#property' ).content, true ),
-				value = parent[ key ];
-
-		if( key === 'data' ) return Object.keys( parent.data ).forEach( arguments.callee.bind( null, parent.data ) );
-
-		node.querySelector( 'td.property-name' ).innerText = key;
-		node.querySelector( 'td.property-value' ).innerHTML = /^http/.exec( value ) ? '<a href="' + value + '">' + value + '</a>' : value;
-
-		propertiesTBody.appendChild( node );
-	}.bind(null, pit) );
-
-	node.querySelector( 'table.related-pits thead td.type' ).innerText = pit.type === 'tnl:Person' ? 'Organisatie' : 'Persoon';
-
-	relatedPits.forEach( function( relatedPit ) {
-		relationsTBody.appendChild( makeRelatedPitRow( relatedPit ) );
-	} );
+	var relationLabelText = pit.type === 'tnl:Person' ? 'Organisatie' : 'Persoon',
+			instructions = {
+				'h2': pit.name,
+				'a.sourcetext': {
+					textContent: pit.dataset,
+					href: '#dataset/' + pit.dataset
+				},
+				'table.properties tbody': {
+					template: '#property',
+					list: propertiesList
+				},
+				'table.related-pits thead td.type': relationLabelText,
+				'table.related-pits tbody': {
+					template: '#relation',
+					list: relatedPits,
+					convert: convertRelatedPit
+				}
+			};
 
 	if( pit.type === 'tnl:Person' ) {
-		allRelations = node.querySelector( 'a.all-relations' );
-		allRelations.innerText = 'alle relaties tonen';
-		allRelations.href = location.hash + '/network';
+		instructions[ 'a.all-relations' ] = {
+			textContent: 'alle relaties tonen',
+			href: '#pit/' + makeSafe( pit.id ) + '/network'
+		};
 	}
+
+	var pitElement = instantiateTemplate( '#pit', instructions );
 
 	clearScreen();
 
-	document.querySelector( 'table#search-table td.result' ).appendChild( node );
+	return document.querySelector( 'table#search-table td.result' ).appendChild( pitElement );
+
+	function makeTemplateInstructionForProperty( key, value ) {
+		if( pitPropertiesBlacklist.indexOf( key ) > -1 ) return;
+
+		if( key === 'data' ) return value.forEach( makeTemplateInstructionForProperty );
+
+		propertiesList.push( {
+			'td.property-name': key,
+			'td.property-value': /^http/.exec( value ) ?
+				'<a href="' + value + '">' + value + '</a>' :
+				value
+		} );
+	}
 }
 
 function showNetwork( err, pit, relatedPits ) {
 	if( err ) return showError( err );
-	
-	var template = document.querySelector( '#network' ),
-			node = document.importNode( template.content, true ),
-			tbody = node.querySelector( 'table.related-pits tbody' );
 
-	node.querySelector( 'h2' ).innerText = pit.name;
-
-	relatedPits.forEach( function( relatedPit ) {
-		tbody.appendChild( makeRelatedPitRow( relatedPit ) );
+	var networkElement = instantiateTemplate( '#network', {
+		'h2': pit.name,
+		'table.related-pits tbody': {
+			template: '#relation',
+			list: relatedPits,
+			convert: convertRelatedPit
+		}
 	} );
 
 	clearScreen();
 
-	document.querySelector( 'table#search-table td.result' ).appendChild( node );
+	document.querySelector( 'table#search-table td.result' ).appendChild( networkElement );
 }
 
 function showDataset( dataset ) {
-	var template = document.querySelector( '#dataset' ),
-			node = document.importNode( template.content, true ),
-			anchor = node.querySelector( '.website a' );
+	var datasetElement = instantiateTemplate( '#dataset', {
+		'h2': dataset.title,
+		'p.author': dataset.author,
+		'p.description': dataset.description,
+		'p.date': dataset.creationDate,
+		'p.website a': {
+			textContent: dataset.website,
+			href: dataset.website
+		}
+	} );
 
-	node.querySelector( 'h2' ).innerText = dataset.title;
-	node.querySelector( 'p.author' ).innerText = dataset.author;
-	node.querySelector( 'p.description' ).innerHTML = dataset.description;
-	node.querySelector( 'p.date' ).innerText = dataset.creationDate;
-
-	anchor.innerHTML = dataset.website;
-	anchor.href = dataset.website;
-
-	document.querySelector( 'table#search-table td.result' ).appendChild( node );
+	document.querySelector( 'table#search-table td.result' ).appendChild( datasetElement );
 }
 
-function makeRelatedPitRow( relatedPit ) {
-	var relatedRowTemplate = document.querySelector( '#relation' ),
-			node = document.importNode( relatedRowTemplate.content, true ),
-			anchor = node.querySelector( 'td.name a' );
-
-	anchor.innerText = relatedPit.name;
-	anchor.href = '#pit/' + makeSafe( relatedPit.id );
-
-	return node;
+function convertRelatedPit( relatedPit ) {
+	return {
+		'td.name a': {
+			textContent: relatedPit.name,
+			href: '#pit/' + makeSafe( relatedPit.id )
+		}
+	};
 }

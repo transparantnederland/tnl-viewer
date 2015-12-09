@@ -3,13 +3,29 @@ var boundDelegates = {},
     routeHandlers = {},
     ignoreHashChange = false;
 
+function createObjectIterator( method ) {
+  return function( fun ) {
+    var self = this;
+
+    return Object.keys( self )[ method ]( iterate );
+
+    function iterate( key ) {
+      return fun( key, self[ key ], self );
+    }
+  };
+}
+
+Object.prototype.forEach = createObjectIterator( 'forEach' );
+Object.prototype.map = createObjectIterator( 'map' );
+Object.prototype.filter = createObjectIterator( 'filter' );
+
 document.addEventListener( 'DOMContentLoaded', documentReady );
 
 window.addEventListener( 'hashchange', hashChange );
 
 function documentReady() {
 	initEventHandlers();
-
+  
 	if( location.hash ) handleHash( location.hash.substring( 1 ) );
 }
 
@@ -44,24 +60,19 @@ function handleHash( hash ) {
 }
 
 function initEventHandlers(){
-  Object.keys( eventHandlers ).forEach( bindHandlersForElement );
+  eventHandlers.forEach( bindHandlersForElement );
 
-  function bindHandlersForElement( nodeSelector ){
-    var handlers = eventHandlers[nodeSelector],
-        element = nodeSelector instanceof Element ? nodeSelector : document.querySelector( nodeSelector ) ;
-    if( element ) Object.keys( handlers ).forEach( bindEvent );
-    else Object.keys( handlers ).forEach( bindDelegate );
+  function bindHandlersForElement( nodeSelector, handlers ){
+    var element = nodeSelector instanceof Element ? nodeSelector : document.querySelector( nodeSelector ) ;
+    if( element ) handlers.forEach( element.addEventListener.bind( element ) );
+    else handlers.forEach( bindDelegate );
 
-    function bindEvent( eventName ){
-      element.addEventListener( eventName, handlers[eventName] );
-    }
-
-    function bindDelegate( eventName ){
-      if( !boundDelegates[eventName] ) {
-        boundDelegates[eventName] = {};
+    function bindDelegate( eventName, eventHandler ){
+      if( !boundDelegates[ eventName ] ) {
+        boundDelegates[ eventName ] = {};
         document.addEventListener( eventName, createDelegateHandler( eventName ) );
       }
-      boundDelegates[ eventName ][ nodeSelector] = handlers[eventName];
+      boundDelegates[ eventName ][ nodeSelector] = eventHandler;
     }
   }
 
@@ -72,15 +83,63 @@ function initEventHandlers(){
           result = true, didAnyCancel;
 
       while( target && result ){
-        didAnyCancel = Object.keys( delegates ).map( evaluateHandler );
+        didAnyCancel = delegates.map( evaluateHandler );
         result = !~didAnyCancel.indexOf(false);
 
         target = target.parentNode;
       }
 
-      function evaluateHandler( nodeSelector ){
-        if( target.matches && target.matches( nodeSelector ) ) return delegates[nodeSelector].call( target, e );
+      function evaluateHandler( nodeSelector, delegate ){
+        if( target.matches && target.matches( nodeSelector ) ) return delegate.call( target, e );
       }
     };
+  }
+}
+
+function instantiateTemplate( templateSelector, data ) {
+  var node = document.importNode( document.querySelector( templateSelector ).content, true );
+
+  data.forEach( setChildElement );
+
+  return node;
+
+  function setChildElement( key, value ) {
+    var type = typeof value,
+        element = node.querySelector( key );
+    
+    if( type === 'string' || type === 'number' ) {
+      element.innerHTML = value;
+      return;
+    }
+
+    if( type === 'function' ) {
+      return value( element );
+    }
+
+    if( value.template ) {
+      value.list.forEach( appendChild );
+      return;
+    }
+
+    value.forEach( setElementProperty );
+
+    function setElementProperty( key, subValue ) {
+      if( /data-/.exec( key ) ) return element.dataset[ key.slice( 5 ) ] = subValue;
+      element[ key ] = subValue;
+    }
+
+    function appendChild( item ) {
+      var values = {};
+
+      if( value.convert ) values = value.convert( item );
+      else if( value.mapping ) value.mapping.forEach( declareValue );
+      else values = item;
+
+      return element.appendChild( instantiateTemplate( value.template, values ) );
+
+      function declareValue( key, property ) {
+        values[ key ] = item[ property ];
+      }
+    }
   }
 }
