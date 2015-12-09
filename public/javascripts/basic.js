@@ -30,11 +30,11 @@ function documentReady() {
 }
 
 function makeSafe( uri ) {
-	return uri.replace( '/', '\\' );
+	return encodeURIComponent( uri );
 }
 
 function makeUri( string ) {
-	return string.replace( '\\', '/' );
+	return decodeURIComponent( string );
 }
 
 function replaceHash( newHash, suppress ) {
@@ -116,12 +116,12 @@ function instantiateTemplate( templateSelector, data ) {
       return value( element );
     }
 
-    if( value.template ) {
+    if( value && value.template ) {
       value.list.forEach( appendChild );
       return;
     }
 
-    value.forEach( setElementProperty );
+    value && value.forEach( setElementProperty );
 
     function setElementProperty( key, subValue ) {
       if( /data-/.exec( key ) ) return element.dataset[ key.slice( 5 ) ] = subValue;
