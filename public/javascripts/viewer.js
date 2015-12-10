@@ -141,11 +141,16 @@ function showFilters() {
 		return filterGroupElement;
 
 		function createFilterItem( name, info ) {
+			var id = key + '-' + name;
 			return {
 				'input': {
 					'checked': info.value || '',
 					'data-filterkey': key,
-					'data-filtervalue': name
+					'data-filtervalue': name,
+					'id': id
+				},
+				'label': {
+					htmlFor: id
 				},
 				'.name': name,
 				'.count': info.count
