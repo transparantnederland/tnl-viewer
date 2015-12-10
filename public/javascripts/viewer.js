@@ -19,11 +19,13 @@ function clear() {
 }
 
 function searchKeyUp( e ) {
+	if( e.keyCode === 38 || e.keyCode === 40 ) return;
+
+	document.body.scrollTop = 0;
+
 	if( e.keyCode === 13 ) {
 		return search();
 	}
-
-	if( e.keyCode === 38 || e.keyCode === 40 ) return;
 
 	if( e.target.value.length > 1 ) {
 		return search( '*' );
