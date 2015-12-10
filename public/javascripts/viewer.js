@@ -81,15 +81,25 @@ function search( append, string ){
 }
 
 function updateFilters() {
-	filterableProperties.forEach( function( key ) {
+	return filterableProperties.forEach( updateFilterableProperty );
+
+	function updateFilterableProperty( key ) {
 		var list = filters[ key ] = filters[ key ] || {};
 
-		list.forEach( function( key, item ) {
-			item.count = 0; //reset count
-		} );
+		list.forEach( resetItemCount );
 
-		filteredResults.forEach( function( pit ) {
-			var value = pit[ key ],
+		filteredResults.forEach( getFilterablePropertiesFromConcept );
+
+		function resetItemCount( key, item ) {
+			item.count = 0; //reset count
+		}
+
+		function getFilterablePropertiesFromConcept( concept ) {
+			return concept.forEach( getFilterablePropertiesFromPit );
+		}
+
+		function getFilterablePropertiesFromPit( pitContainer ) {
+			var value = pitContainer.pit[ key ],
 					item = list[ value ],
 					storedValue;
 
@@ -99,67 +109,87 @@ function updateFilters() {
 
 			item.value = storedValue || false;
 			item.count++;
-		} );
-	} );
+		}
+	}
 }
 
 function showFilters() {
 	var container = document.querySelector( 'ul#filtercontainer' );
 	container.innerHTML = '<h3>filter de resultaten:</h3>';
 	
-	filters.forEach( function( key, filter ) {
+	return filters.forEach( createAndAppendFilterGroup );
+
+	function createAndAppendFilterGroup( key, filter ) {
 		var filterGroup = createFilterGroup( key, filter );
 		if( filterGroup ) container.appendChild( filterGroup );
-	} );
-}
+	}
 
-function createFilterGroup( key, properties ) {
-	var items = properties.map( function( name, info ) {
-				return {
-					'input': {
-						'checked': info.value || '',
-						'data-filterkey': key,
-						'data-filtervalue': name
-					},
-					'.name': name,
-					'.count': info.count
-				};
-			} ),
-			filterGroupElement = instantiateTemplate( '#filtergroup', {
-				'h3': key,
-				'ul': {
-					template: '#filteritem',
-					list: items
-				}
-			} );
+	function createFilterGroup( key, properties ) {
+		var items = properties.map( createFilterItem ),
+				filterGroupElement = instantiateTemplate( '#filtergroup', {
+					'h3': key,
+					'ul': {
+						template: '#filteritem',
+						list: items
+					}
+				} );
 
-	if( filterGroupElement.querySelector( 'ul' ).children.length < 2 ) return;
-	
-	return filterGroupElement;
+		if( filterGroupElement.querySelector( 'ul' ).children.length < 2 ) return;
+		
+		return filterGroupElement;
+
+		function createFilterItem( name, info ) {
+			return {
+				'input': {
+					'checked': info.value || '',
+					'data-filterkey': key,
+					'data-filtervalue': name
+				},
+				'.name': name,
+				'.count': info.count
+			};
+		}
+	}
 }
 
 function applyFilters(){
 	var allowedPropertiesByKey = {};
 	
-	filters.forEach( function( key, list ) {
+	filters.forEach( getAllowedProperties );
+
+	filteredResults = searchResults.filter( conceptFilterPredicate );
+	return;
+
+	function getAllowedProperties( key, list ) {
 		allowedPropertiesByKey[ key ] = [];
 
-		list.forEach( function( property, item ) {
-			if( item.value ) allowedPropertiesByKey[ key ].push( property );
-		} );
+		list.forEach( getAllowedProperty );
 
 		if( !allowedPropertiesByKey[ key ].length ) delete allowedPropertiesByKey[ key ];
-	} );
+		return;
 
-	filteredResults = searchResults.filter( function( pit ) {
-		var filtered = false;
+		function getAllowedProperty( property, item ) {
+			if( item.value ) allowedPropertiesByKey[ key ].push( property );
+		}
+	}
 
-		allowedPropertiesByKey.forEach( function( key, list ){
-			filtered = filtered || list.indexOf( pit[ key ] ) === -1;
-		} );
+	function conceptFilterPredicate( concept ) {
+		var matchedFilter = concept.map( pitFilterPredicate );
 
-		return !filtered;
-	} );
+		return matchedFilter.indexOf( true ) > -1; // if any of the concept's pits match the filter, show the whole concept
+
+		function pitFilterPredicate( pitContainer ) {
+			var filtered = false;
+
+			allowedPropertiesByKey.forEach( updateFiltered );
+
+			return !filtered;
+
+			function updateFiltered( key, allowedProperties ){
+				filtered = filtered || allowedProperties.indexOf( pitContainer.pit[ key ] ) === -1;
+			}
+		}
+	}
 }
 
 function showSearchResults(){
@@ -174,9 +204,19 @@ function showSearchResults(){
 		return;
 	}
 
-	filteredResults.forEach( function( pit ) {
-		//ul.appendChild( createSearchResult( pit ) );
-		ul.appendChild( instantiateTemplate( '#searchresult', {
+	filteredResults.forEach( appendConcept );
+
+	container.appendChild( ul );
+	return;
+
+	function appendConcept( concept ) {
+		return concept.forEach( appendPit );
+	}
+
+	function appendPit( pitContainer ) {
+		var pit = pitContainer.pit;
+
+		return ul.appendChild( instantiateTemplate( '#searchresult', {
 			'h3 a': {
 				textContent: pit.name,
 				href: '#pit/' + makeSafe( pit.id )
@@ -187,9 +227,7 @@ function showSearchResults(){
 			},
 			'span.typetext': pit.type
 		} ) );
-	} );
-
-	container.appendChild( ul );
+	}
 }
 
 function pitHandler( routeParts ) {
