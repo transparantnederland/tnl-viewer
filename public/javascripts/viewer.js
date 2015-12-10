@@ -235,18 +235,18 @@ function pitHandler( routeParts ) {
 	var pitId = routeParts[ 0 ] = makeUri( routeParts[ 0 ] );
 
 	if( routeParts.length === 1 ){
-		getPit( pitId, function( err, pit ) {
-			getRelations( pit, function( err, relatedPits ) {
-				showPit( err, pit, relatedPits );
+		getPit( pitId, function( err, concept ) {
+			getRelations( concept[0].pit, function( err, relatedConcepts ) {
+				showConcept( err, concept, relatedConcepts );
 			} );
 		} );
 	} else if( routeParts[ 1 ] === 'network' ) {
-		getPit( pitId, function( err, pit ) {
+		getPit( pitId, function( err, concept ) {
 			ajaxRequest(
 				apiUrl + 'peopleFromOrgsFromPerson',
 				{ id: pitId },
 				function( network ) {
-					showNetwork( null, pit, network );
+					showNetwork( null, concept, network );
 				}
 			);
 		} );
@@ -308,69 +308,78 @@ var pitPropertiesBlacklist = [
 			'type'
 		];
 
-function showPit( err, pit, relatedPits ) {
+function showConcept( err, concept, relatedConcepts ) {
 	if( err ) return showError( err );
 	document.querySelector( 'input#search' ).value = '';
 
-	var propertiesList = [];
+	var ul = document.createElement( 'ul' );
 
-	pit.forEach( makeTemplateInstructionForProperty );
+	concept.forEach( showPit );
 
-	var relationLabelText = pit.type === 'tnl:Person' ? 'Organisatie' : 'Persoon',
-			instructions = {
-				'h2': pit.name,
-				'a.sourcetext': {
-					textContent: pit.dataset,
-					href: '#dataset/' + pit.dataset
-				},
-				'table.properties tbody': {
-					template: '#property',
-					list: propertiesList
-				},
-				'table.related-pits thead td.type': relationLabelText,
-				'table.related-pits tbody': {
-					template: '#relation',
-					list: relatedPits,
-					convert: convertRelatedPit
-				}
+	function showPit( pitContainer ) {
+		var pit = pitContainer.pit,
+				propertiesList = [];
+
+		pit.forEach( makeTemplateInstructionForProperty );
+
+		var relationLabelText = pit.type === 'tnl:Person' ? 'Organisatie' : 'Persoon',
+				instructions = {
+					'h2': pit.name,
+					'a.sourcetext': {
+						textContent: pit.dataset,
+						href: '#dataset/' + pit.dataset
+					},
+					'table.properties tbody': {
+						template: '#property',
+						list: propertiesList
+					},
+					'table.related-pits thead td.type': relationLabelText,
+					'table.related-pits tbody': {
+						template: '#relation',
+						list: relatedConcepts,
+						convert: convertRelatedConcept
+					}
+				};
+
+		if( pit.type === 'tnl:Person' ) {
+			instructions[ 'a.all-relations' ] = {
+				textContent: 'alle relaties tonen',
+				href: '#pit/' + makeSafe( pit.id ) + '/network'
 			};
+		}
 
-	if( pit.type === 'tnl:Person' ) {
-		instructions[ 'a.all-relations' ] = {
-			textContent: 'alle relaties tonen',
-			href: '#pit/' + makeSafe( pit.id ) + '/network'
-		};
+		var pitElement = instantiateTemplate( '#pit', instructions );
+
+		return ul.appendChild( pitElement );
+
+		function makeTemplateInstructionForProperty( key, value ) {
+			if( pitPropertiesBlacklist.indexOf( key ) > -1 ) return;
+
+			if( key === 'data' ) return value.forEach( makeTemplateInstructionForProperty );
+
+			propertiesList.push( {
+				'td.property-name': key,
+				'td.property-value': /^http/.exec( value ) ?
+					'<a href="' + value + '">' + value + '</a>' :
+					value
+			} );
+		}
 	}
-
-	var pitElement = instantiateTemplate( '#pit', instructions );
 
 	clearScreen();
 
-	return document.querySelector( 'table#search-table td.result' ).appendChild( pitElement );
-
-	function makeTemplateInstructionForProperty( key, value ) {
-		if( pitPropertiesBlacklist.indexOf( key ) > -1 ) return;
-
-		if( key === 'data' ) return value.forEach( makeTemplateInstructionForProperty );
-
-		propertiesList.push( {
-			'td.property-name': key,
-			'td.property-value': /^http/.exec( value ) ?
-				'<a href="' + value + '">' + value + '</a>' :
-				value
-		} );
-	}
+	return document.querySelector( 'table#search-table td.result' ).appendChild( ul );
 }
 
-function showNetwork( err, pit, relatedPits ) {
+function showNetwork( err, concept, relatedConcepts ) {
 	if( err ) return showError( err );
 
 	var networkElement = instantiateTemplate( '#network', {
-		'h2': pit.name,
+		'h2': concept[ 0 ].pit.name,
 		'table.related-pits tbody': {
 			template: '#relation',
-			list: relatedPits,
-			convert: convertRelatedPit
+			list: relatedConcepts,
+			convert: convertRelatedConcept
 		}
 	} );
 
@@ -394,7 +403,8 @@ function showDataset( dataset ) {
 	document.querySelector( 'table#search-table td.result' ).appendChild( datasetElement );
 }
 
-function convertRelatedPit( relatedPit ) {
+function convertRelatedConcept( relatedConcept ) {
+	var relatedPit = relatedConcept[ 0 ].pit;
 	return {
 		'td.name a': {
 			textContent: relatedPit.name,
