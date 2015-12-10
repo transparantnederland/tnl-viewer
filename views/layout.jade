@@ -2,20 +2,13 @@ doctype html
 html
   head
     link( rel='stylesheet', href='/stylesheets/style.css' )
+    link( rel='stylesheet', href='https://transparantnederland.nl/assets/stylesheets/main.css' )
+    //- link( rel='stylesheet', href='/stylesheets/main.css' )
     script( src='/javascripts/ajaxRequest.js' )
     script( src='/javascripts/basic.js' )
     script( src='/javascripts/viewer.js' )
   body
-    header#header.header.cf.mainHeader( role="banner" )
-      nav( role="navigation" )
-        ul.menu.cf
-          li
-            a.logo( href="http://transparantnederland.nl" )
-          li.searchHeader
-            input#search( list="autosuggest", placeholder="zoeken" )
-            datalist#autosuggest
     block content
-
     template#searchresult
       li
         h3
