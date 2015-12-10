@@ -2,9 +2,15 @@ extends layout
 
 block content
   #wrap
-    table#search-table
-      tbody
-        tr
-          td.filtertd
-            ul#filtercontainer
-          td.result
+    section.searchSection
+      form
+        input#search( list="autosuggest", placeholder="zoeken" )
+        button(type="submit").submitsearch
+          span.icon-loupe
+    section.searchResults
+      table#search-table
+        tbody
+          tr
+            td.filtertd
+              ul#filtercontainer
+            td.result
