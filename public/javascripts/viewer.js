@@ -371,15 +371,15 @@ function showConcept( err, concept, relatedConcepts ) {
 	return document.querySelector( 'table#search-table td.result' ).appendChild( ul );
 }
 
-function showNetwork( err, pit, relatedPits ) {
+function showNetwork( err, concept, relatedConcepts ) {
 	if( err ) return showError( err );
 
 	var networkElement = instantiateTemplate( '#network', {
-		'h2': pit.name,
+		'h2': concept[ 0 ].pit.name,
 		'table.related-pits tbody': {
 			template: '#relation',
-			list: relatedPits,
-			convert: convertRelatedPit
+			list: relatedConcepts,
+			convert: convertRelatedConcept
 		}
 	} );
 
