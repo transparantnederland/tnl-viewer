@@ -194,7 +194,7 @@ function applyFilters(){
 
 function showSearchResults(){
 	var container = document.querySelector( 'td.result');
-	container.innerText = '';
+	container.innerHTML = '';
 
 	var ul = document.createElement( 'ul' );
 	ul.id = 'search-results';
