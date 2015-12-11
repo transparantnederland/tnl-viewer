@@ -19,11 +19,13 @@ function clear() {
 }
 
 function searchKeyUp( e ) {
+	if( e.keyCode === 38 || e.keyCode === 40 ) return;
+
+	document.body.scrollTop = 0;
+
 	if( e.keyCode === 13 ) {
 		return search();
 	}
-
-	if( e.keyCode === 38 || e.keyCode === 40 ) return;
 
 	if( e.target.value.length > 1 ) {
 		return search( '*' );
@@ -139,11 +141,16 @@ function showFilters() {
 		return filterGroupElement;
 
 		function createFilterItem( name, info ) {
+			var id = key + '-' + name;
 			return {
 				'input': {
 					'checked': info.value || '',
 					'data-filterkey': key,
-					'data-filtervalue': name
+					'data-filtervalue': name,
+					'id': id
+				},
+				'label': {
+					htmlFor: id
 				},
 				'.name': name,
 				'.count': info.count
