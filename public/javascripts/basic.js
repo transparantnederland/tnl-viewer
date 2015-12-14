@@ -25,6 +25,7 @@ window.addEventListener( 'hashchange', hashChange );
 
 function documentReady() {
 	initEventHandlers();
+  setMenuMargin();
   
 	if( location.hash ) handleHash( location.hash.substring( 1 ) );
 }
@@ -142,4 +143,11 @@ function instantiateTemplate( templateSelector, data ) {
       }
     }
   }
+}
+
+function setMenuMargin(){
+  var headerHeight = document.querySelector('.searchSection').offsetHeight;
+  document.querySelector(".filtertd").style.marginTop = headerHeight + 'px';
+  document.querySelector(".searchResults").style.top = headerHeight + 'px';
+  console.log(headerHeight);
 }
