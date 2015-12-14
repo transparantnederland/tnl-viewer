@@ -1,5 +1,3 @@
-var apiUrl = 'https://api.transparantnederland.nl/';
-
 document.addEventListener( 'clear', clear );
 
 eventHandlers[ 'input#search' ] = {

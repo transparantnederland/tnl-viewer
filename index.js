@@ -10,6 +10,16 @@ var users = require('./routes/users');
 
 var app = express();
 
+var apiUrl = 'https://api.transparantnederland.nl/';
+
+process.argv.slice( 2 ).forEach( function( value ) {
+    console.log( value );
+    var split = value.split('=');
+    if( split[ 0 ].toLowerCase() === 'apiurl' ) apiUrl = split[ 1 ];
+} );
+
+app.locals.apiUrl = apiUrl;
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
