@@ -215,23 +215,32 @@ function showSearchResults(){
 	return;
 
 	function appendConcept( concept ) {
-		return concept.forEach( appendPit );
-	}
+		var names = [],
+				sources = [],
+				type = concept[ 0 ].pit.type,
+				id = concept[ 0 ].pit.id;
 
-	function appendPit( pitContainer ) {
-		var pit = pitContainer.pit;
+		concept.forEach( extractShowableData );
 
 		return ul.appendChild( instantiateTemplate( '#searchresult', {
 			'h3 a': {
-				textContent: pit.name,
-				href: '#pit/' + makeSafe( pit.id )
+				textContent: names.join(', '),
+				href: '#pit/' + makeSafe( id )
 			},
-			'span.sourcetext a': {
-				textContent: pit.dataset,
-				href: pit.dataset
-			},
-			'span.typetext': pit.type
+			'span.sourcetext': sources.map( makeDatasetLink ).join(', '),
+			'span.typetext': type
 		} ) );
+
+		function extractShowableData( pitContainer ) {
+			var pit = pitContainer.pit;
+
+			if( names.indexOf( pit.name ) === -1 ) names.push( pit.name );
+			if( sources.indexOf( pit.dataset ) === -1 ) sources.push( pit.dataset );
+		}
+
+		function makeDatasetLink( datasetName ) {
+			return '<a href="#dataset/' + datasetName + '">' + datasetName + '</a>';
+		}
 	}
 }
 
