@@ -319,70 +319,87 @@ var pitPropertiesBlacklist = [
 			'dataset',
 			'person',
 			'systemId',
-			'type'
+			'type',
+			'sex',
+			'rank',
+			'titles',
+			'etitles',
+			'initials',
+			'tussenv',
+			'firstnames'
 		];
 
 function showConcept( err, concept, relatedConcepts ) {
 	if( err ) return showError( err );
 	document.querySelector( 'input#search' ).value = '';
 
-	var ul = document.createElement( 'ul' );
+	var pit0 = concept[ 0 ].pit,
+			names = [],
+			sources = [],
+			propertiesProcessed = [];
+			propertiesList = [];
 
-	concept.forEach( showPit );
+	concept.forEach( extractShowableData );
 
-	function showPit( pitContainer ) {
-		var pit = pitContainer.pit,
-				propertiesList = [];
-
-		pit.forEach( makeTemplateInstructionForProperty );
-
-		var relationLabelText = pit.type === 'tnl:Person' ? 'Organisatie' : 'Persoon',
-				instructions = {
-					'h2': pit.name,
-					'a.sourcetext': {
-						textContent: pit.dataset,
-						href: '#dataset/' + pit.dataset
-					},
-					'table.properties tbody': {
-						template: '#property',
-						list: propertiesList
-					},
-					'table.related-pits thead td.type': relationLabelText,
-					'table.related-pits tbody': {
-						template: '#relation',
-						list: relatedConcepts,
-						convert: convertRelatedConcept
-					}
-				};
-
-		if( pit.type === 'tnl:Person' ) {
-			instructions[ 'a.all-relations' ] = {
-				textContent: 'alle relaties tonen',
-				href: '#pit/' + makeSafe( pit.id ) + '/network'
+	var relationLabelText = pit0.type === 'tnl:Person' ? 'Organisatie' : 'Persoon',
+			instructions = {
+				'h2': names.join(', '),
+				'span.sources': sources.map( makeDatasetLink ).join(', '),
+				'table.properties tbody': {
+					template: '#property',
+					list: propertiesList
+				},
+				'table.related-pits thead td.type': relationLabelText,
+				'table.related-pits tbody': {
+					template: '#relation',
+					list: relatedConcepts,
+					convert: convertRelatedConcept
+				}
 			};
-		}
 
-		var pitElement = instantiateTemplate( '#pit', instructions );
-
-		return ul.appendChild( pitElement );
-
-		function makeTemplateInstructionForProperty( key, value ) {
-			if( pitPropertiesBlacklist.indexOf( key ) > -1 ) return;
-
-			if( key === 'data' ) return value.forEach( makeTemplateInstructionForProperty );
-
-			propertiesList.push( {
-				'td.property-name': key,
-				'td.property-value': /^http/.exec( value ) ?
-					'<a href="' + value + '">' + value + '</a>' :
-					value
-			} );
-		}
+	if( pit0.type === 'tnl:Person' ) {
+		instructions[ 'a.all-relations' ] = {
+			textContent: 'alle relaties tonen',
+			href: '#pit/' + makeSafe( pit0.id ) + '/network'
+		};
 	}
+
+	var pitElement = instantiateTemplate( '#pit', instructions );
 
 	clearScreen();
 
-	return document.querySelector( 'table#search-table td.result' ).appendChild( ul );
+	return document.querySelector( 'table#search-table td.result' ).appendChild( pitElement );
+
+	function extractShowableData( pitContainer ) {
+		var pit = pitContainer.pit;
+
+		if( names.indexOf( pit.name ) === -1 ) names.push( pit.name );
+		if( sources.indexOf( pit.dataset ) === -1 ) sources.push( pit.dataset );
+		pit.forEach( makeTemplateInstructionForProperty );
+	}
+
+	function makeTemplateInstructionForProperty( key, value ) {
+		if( pitPropertiesBlacklist.indexOf( key ) > -1 ) return;
+
+		if( key === 'data' ) return value.forEach( makeTemplateInstructionForProperty );
+
+		var signature = key + '-' + value;
+
+		if( propertiesProcessed.indexOf( signature ) > - 1 ) return;
+
+		propertiesProcessed.push( signature );
+
+		propertiesList.push( {
+			'td.property-name': key,
+			'td.property-value': /^http/.exec( value ) ?
+				'<a href="' + value + '">' + value + '</a>' :
+				value
+		} );
+	}
+
+	function makeDatasetLink( datasetName ) {
+		return '<a href="#dataset/' + datasetName + '">' + datasetName + '</a>';
+	}
 }
 
 function showNetwork( err, concept, relatedConcepts ) {
