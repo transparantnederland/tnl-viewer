@@ -43,14 +43,20 @@ function searchBlur() {
 function toggleFilter( e ) {
 	var key = this.dataset.filterkey,
 			value = this.dataset.filtervalue,
-			state = this.checked;
+			state = !!this.checked,
+			filterTargetName = this.dataset.filtertarget,
+			items = filterableItems[ filterTargetName ],
+			callbacks = {
+				'search-results': showSearchResults
+			};
 
-	filters[ key ][ value ].value = state;
+	filters[ filterTargetName ][ key ][ value ].value = state;
 	
-	applyFilters();
-	updateFilters();
-	showFilters();
-	showSearchResults();
+	filteredItems[ filterTargetName ] = applyFilters( items, filterTargetName );
+	updateFilters( items, filterTargetName );
+	showFilters( filterTargetName );
+	
+	callbacks[ filterTargetName ]();
 }
 
 var filterableProperties = [
@@ -59,7 +65,8 @@ var filterableProperties = [
 		],
 		filters = {},
 		searchResults,
-		filteredResults;
+		filterableItems = {},
+		filteredItems = {};
 
 function search( append, string ){
 	var searchString = ( string || document.querySelector( 'input#search' ).value ) + ( append ? append : '' );
@@ -68,27 +75,30 @@ function search( append, string ){
 		apiUrl + 'search',
 		{ q: searchString },
 		function( results ) {
-			searchResults = results;
-			filteredResults = searchResults;
+			var filterTargetName = 'search-results',
+					filterables = filterableItems[ filterTargetName ] = results,
+					filtered = filteredItems[ filterTargetName ] = results;
 
 			filters = {}; //reset filters from previous searches
-			updateFilters();
-			applyFilters();
-			showFilters();
+			updateFilters( filtered, filterTargetName );
+			filtered = filteredItems[ filterTargetName ] = applyFilters( filtered, filterTargetName );
+			showFilters( filterTargetName );
 			showSearchResults();
 		}
 	);
 }
 
-function updateFilters() {
+function updateFilters( items, filterTargetName ) {
 	return filterableProperties.forEach( updateFilterableProperty );
 
 	function updateFilterableProperty( key ) {
-		var list = filters[ key ] = filters[ key ] || {};
+		filters[ filterTargetName ] = filters[ filterTargetName ] || {};
+
+		var list = filters[ filterTargetName ][ key ] = filters[ filterTargetName ][ key ] || {};
 
 		list.forEach( resetItemCount );
 
-		filteredResults.forEach( getFilterablePropertiesFromConcept );
+		items.forEach( getFilterablePropertiesFromConcept );
 
 		function resetItemCount( key, item ) {
 			item.count = 0; //reset count
@@ -113,11 +123,11 @@ function updateFilters() {
 	}
 }
 
-function showFilters() {
+function showFilters( filterTargetName ) {
 	var container = document.querySelector( 'ul#filtercontainer' );
 	container.innerHTML = '<h3>filter de resultaten:</h3>';
 	
-	return filters.forEach( createAndAppendFilterGroup );
+	return filters[ filterTargetName ].forEach( createAndAppendFilterGroup );
 
 	function createAndAppendFilterGroup( key, filter ) {
 		var filterGroup = createFilterGroup( key, filter );
@@ -145,6 +155,7 @@ function showFilters() {
 					'checked': info.value || '',
 					'data-filterkey': key,
 					'data-filtervalue': name,
+					'data-filtertarget': filterTargetName,
 					'id': id
 				},
 				'label': {
@@ -157,13 +168,12 @@ function showFilters() {
 	}
 }
 
-function applyFilters(){
+function applyFilters( items, filterTargetName ){
 	var allowedPropertiesByKey = {};
 	
-	filters.forEach( getAllowedProperties );
+	filters[ filterTargetName ].forEach( getAllowedProperties );
 
-	filteredResults = searchResults.filter( conceptFilterPredicate );
-	return;
+	return items.filter( conceptFilterPredicate );
 
 	function getAllowedProperties( key, list ) {
 		allowedPropertiesByKey[ key ] = [];
@@ -198,18 +208,19 @@ function applyFilters(){
 }
 
 function showSearchResults(){
-	var container = document.querySelector( 'td.result');
-	container.innerHTML = '';
+	var items = filteredItems[ 'search-results' ],
+			container = document.querySelector( 'td.result'),
+			ul = document.createElement( 'ul' );
 
-	var ul = document.createElement( 'ul' );
+	container.innerHTML = '';
 	ul.id = 'search-results';
 
-	if( !filteredResults.length ) {
+	if( !items.length ) {
 		container.innerText = 'geen resultaten';
 		return;
 	}
 
-	filteredResults.forEach( appendConcept );
+	items.forEach( appendConcept );
 
 	container.appendChild( ul );
 	return;
