@@ -4,6 +4,7 @@ routeHandlers.pit = pitHandler;
 routeHandlers.dataset = datasetHandler;
 
 filterableProperties.network = [
+	'relation_name',
 	'dataset'
 ];
 
@@ -31,6 +32,10 @@ function pitHandler( routeParts ) {
 				apiUrl + 'peopleFromOrgsFromPerson',
 				{ id: pitId },
 				function( network ) {
+					addTestFilterData( {
+						relation_name: [ 'VVD', 'Tweede Kamer', 'Stichting Waardering Erkenning Politie', 'Harige Harry en de Ladyshavers' ]
+					}, network );
+
 					var filterTargetName = 'network',
 							filtered;
 
@@ -43,6 +48,20 @@ function pitHandler( routeParts ) {
 				}
 			);
 		} );
+	}
+}
+
+function addTestFilterData( properties, network ) {
+	return network.forEach( assignProperties );
+
+	function assignProperties( concept ) {
+		var pit = concept[ 0 ].pit;
+		
+		return properties.forEach( assignProperty );
+
+		function assignProperty( key, list ) {
+			pit[ key ] = list[ Math.floor( Math.random() * list.length ) ];
+		}
 	}
 }
 
