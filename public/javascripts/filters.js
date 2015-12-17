@@ -1,34 +1,29 @@
-var filterableProperties = [
-			'type',
-			'dataset'
-		],
+var filterableProperties = {},
 		filters = {},
 		filterableItems = {},
-		filteredItems = {};
+		filteredItems = {},
+		filterCallbacks = {};
 
 eventHandlers[ 'input[type=checkbox].filter' ] = { change: toggleFilter };
 
 function toggleFilter( e ) {
-	var key = this.dataset.filterkey,
-			value = this.dataset.filtervalue,
+	var property = this.dataset.filterkey,
+			filterValue = this.dataset.filtervalue,
 			state = !!this.checked,
 			filterTargetName = this.dataset.filtertarget,
-			items = filterableItems[ filterTargetName ],
-			callbacks = {
-				'search-results': showSearchResults
-			};
+			items = filterableItems[ filterTargetName ];
 
-	filters[ filterTargetName ][ key ][ value ].value = state;
+	filters[ filterTargetName ][ property ][ filterValue ].value = state;
 	
-	filteredItems[ filterTargetName ] = applyFilters( items, filterTargetName );
+	applyFilters( filterTargetName );
 	updateFilters( items, filterTargetName );
 	showFilters( filterTargetName );
 	
-	callbacks[ filterTargetName ]();
+	filterCallbacks[ filterTargetName ]();
 }
 
 function updateFilters( items, filterTargetName ) {
-	return filterableProperties.forEach( updateFilterableProperty );
+	return filterableProperties[ filterTargetName ].forEach( updateFilterableProperty );
 
 	function updateFilterableProperty( key ) {
 		filters[ filterTargetName ] = filters[ filterTargetName ] || {};
@@ -107,12 +102,12 @@ function showFilters( filterTargetName ) {
 	}
 }
 
-function applyFilters( items, filterTargetName ){
+function applyFilters( filterTargetName ){
 	var allowedPropertiesByKey = {};
 	
 	filters[ filterTargetName ].forEach( getAllowedProperties );
 
-	return items.filter( conceptFilterPredicate );
+	filteredItems[ filterTargetName ] = filterableItems[ filterTargetName ].filter( conceptFilterPredicate );
 
 	function getAllowedProperties( key, list ) {
 		allowedPropertiesByKey[ key ] = [];

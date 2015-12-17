@@ -3,6 +3,12 @@ document.addEventListener( 'clear', clear );
 routeHandlers.pit = pitHandler;
 routeHandlers.dataset = datasetHandler;
 
+filterableProperties.network = [
+	'dataset'
+];
+
+filterCallbacks.network = showNetwork;
+
 function clear() {
 	document.querySelector( 'td.filtertd ul' ).innerText = '';
 	document.querySelector( 'td.result' ).innerText = '';
@@ -25,7 +31,15 @@ function pitHandler( routeParts ) {
 				apiUrl + 'peopleFromOrgsFromPerson',
 				{ id: pitId },
 				function( network ) {
-					showNetwork( null, concept, network );
+					var filterTargetName = 'network',
+							filtered;
+
+					filterableItems[ filterTargetName ] = network;
+					updateFilters( network, filterTargetName );
+					showFilters( filterTargetName );
+					applyFilters( filterTargetName );
+
+					showNetwork( null, concept );
 				}
 			);
 		} );
@@ -162,21 +176,27 @@ function showConcept( err, concept, relatedConcepts ) {
 	}
 }
 
-function showNetwork( err, concept, relatedConcepts ) {
+var previousNetworkConcept;
+
+function showNetwork( err, concept ) {
 	if( err ) return showError( err );
 
-	var networkElement = instantiateTemplate( '#network', {
+	if( !concept ) concept = previousNetworkConcept;
+	else previousNetworkConcept = concept;
+	//clearScreen();
+
+	var container = document.querySelector( 'table#search-table td.result' ),
+			networkElement = instantiateTemplate( '#network', {
 		'h2': concept[ 0 ].pit.name,
 		'table.related-pits tbody': {
 			template: '#relation',
-			list: relatedConcepts,
+			list: filteredItems.network,
 			convert: convertRelatedConcept
 		}
 	} );
 
-	clearScreen();
-
-	document.querySelector( 'table#search-table td.result' ).appendChild( networkElement );
+	container.innerHTML = '';
+	container.appendChild( networkElement );
 }
 
 function showDataset( dataset ) {
@@ -200,6 +220,7 @@ function convertRelatedConcept( relatedConcept ) {
 		'td.name a': {
 			textContent: relatedPit.name,
 			href: '#pit/' + makeSafe( relatedPit.id )
-		}
+		},
+		'td.relation': relatedPit.relation_name
 	};
 }

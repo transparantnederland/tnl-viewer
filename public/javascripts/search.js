@@ -7,6 +7,13 @@ eventHandlers[ 'input#search' ] = {
 
 routeHandlers.search = searchHandler;
 
+filterableProperties[ 'search-results' ] = [
+	'type',
+	'dataset'
+];
+
+filterCallbacks[ 'search-results' ] = showSearchResults;
+
 function searchKeyUp( e ) {
 	if( e.keyCode === 38 || e.keyCode === 40 ) return;
 
@@ -49,7 +56,7 @@ function search( append, string ){
 
 			filters = {}; //reset filters from previous searches
 			updateFilters( filtered, filterTargetName );
-			filtered = filteredItems[ filterTargetName ] = applyFilters( filtered, filterTargetName );
+			applyFilters( filterTargetName );
 			showFilters( filterTargetName );
 			showSearchResults();
 		}
