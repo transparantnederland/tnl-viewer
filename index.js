@@ -10,7 +10,8 @@ var users = require('./routes/users');
 
 var app = express();
 
-var apiUrl = 'https://api.transparantnederland.nl/';
+var apiUrl = 'http://127.0.0.1:3001/';
+var webPort = 3002;
 
 process.argv.slice( 2 ).forEach( function( value ) {
     console.log( value );
@@ -65,4 +66,4 @@ app.use(function(err, req, res, next) {
     });
 });
 
-app.listen(6789);
+app.listen(webPort);
