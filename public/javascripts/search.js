@@ -7,10 +7,10 @@ eventHandlers[ 'input#search' ] = {
 
 routeHandlers.search = searchHandler;
 
-filterableProperties[ 'search-results' ] = [
-	'type',
-	'dataset'
-];
+filterableProperties[ 'search-results' ] = {
+	type: 'pit.type',
+	bron: 'pit.dataset'
+};
 
 filterCallbacks[ 'search-results' ] = showSearchResults;
 

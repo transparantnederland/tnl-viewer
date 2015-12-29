@@ -25,10 +25,10 @@ function toggleFilter( e ) {
 function updateFilters( items, filterTargetName ) {
 	return filterableProperties[ filterTargetName ].forEach( updateFilterableProperty );
 
-	function updateFilterableProperty( key ) {
+	function updateFilterableProperty( name, key ) {
 		filters[ filterTargetName ] = filters[ filterTargetName ] || {};
 
-		var list = filters[ filterTargetName ][ key ] = filters[ filterTargetName ][ key ] || {};
+		var list = filters[ filterTargetName ][ name ] = filters[ filterTargetName ][ name ] || {};
 
 		list.forEach( resetItemCount );
 
@@ -43,7 +43,7 @@ function updateFilters( items, filterTargetName ) {
 		}
 
 		function getFilterablePropertiesFromPit( pitContainer ) {
-			var value = pitContainer.pit[ key ],
+			var value = resolveOnObject( pitContainer, key ),
 					item = list[ value ],
 					storedValue;
 
@@ -103,7 +103,8 @@ function showFilters( filterTargetName ) {
 }
 
 function applyFilters( filterTargetName ){
-	var allowedPropertiesByKey = {};
+	var allowedPropertiesByKey = {},
+			filterablePropertiesForTarget = filterableProperties[ filterTargetName ];
 	
 	filters[ filterTargetName ].forEach( getAllowedProperties );
 
@@ -134,8 +135,11 @@ function applyFilters( filterTargetName ){
 
 			return !filtered;
 
-			function updateFiltered( key, allowedProperties ){
-				filtered = filtered || allowedProperties.indexOf( pitContainer.pit[ key ] ) === -1;
+			function updateFiltered( filterName, allowedProperties ){
+				var propertyPath = filterablePropertiesForTarget[ filterName ],
+						value = resolveOnObject( pitContainer, propertyPath );
+
+				filtered = filtered || allowedProperties.indexOf( value ) === -1;
 			}
 		}
 	}

@@ -3,9 +3,10 @@ document.addEventListener( 'clear', clear );
 routeHandlers.pit = pitHandler;
 routeHandlers.dataset = datasetHandler;
 
-filterableProperties.network = [
-	'dataset'
-];
+filterableProperties.network = {
+	bron: 'pit.dataset',
+	relatie: 'relation_org.name'
+};
 
 filterCallbacks.network = showNetwork;
 
@@ -19,30 +20,46 @@ function pitHandler( routeParts ) {
 	// get back the original pit uri
 	var pitId = routeParts[ 0 ] = makeUri( routeParts[ 0 ] );
 
-	if( routeParts.length === 1 ){
-		getPit( pitId, function( err, concept ) {
-			getRelations( concept[0].pit, function( err, relatedConcepts ) {
-				showConcept( err, concept, relatedConcepts );
-			} );
-		} );
-	} else if( routeParts[ 1 ] === 'network' ) {
-		getPit( pitId, function( err, concept ) {
-			ajaxRequest(
+	return getPit( pitId, gotPit );
+
+	function gotPit( err, concept ) {
+		if( routeParts.length === 1 ) {
+			return getRelations( concept[ 0 ].pit, gotRelations );
+		}
+
+		if( routeParts[ 1 ] === 'network' ) {
+			return ajaxRequest(
 				apiUrl + 'peopleFromOrgsFromPerson',
 				{ id: pitId },
-				function( network ) {
-					var filterTargetName = 'network',
-							filtered;
-
-					filterableItems[ filterTargetName ] = network;
-					updateFilters( network, filterTargetName );
-					showFilters( filterTargetName );
-					applyFilters( filterTargetName );
-
-					showNetwork( null, concept );
-				}
+				gotNetwork
 			);
-		} );
+		}
+
+		function gotRelations( err, relatedConcepts ) {
+			showConcept( err, concept, relatedConcepts );
+		}
+
+		function gotNetwork( network ) {
+			var filterTargetName = 'network',
+					filtered;
+
+			// we need the relation_org property, just clear every one that doesn't have it
+			network.forEach( function( concept, index ) {
+				network[ index ] = concept.filter( function( pitContainer ) {
+					return !!pitContainer.relation_org;
+				} );
+			} );
+			filterableItems[ filterTargetName ] = network.filter( function( concept ){
+				if( !concept.length ) return false;
+				return !!concept[ 0 ].relation_org;
+			} );
+
+			updateFilters( network, filterTargetName );
+			showFilters( filterTargetName );
+			applyFilters( filterTargetName );
+
+			showNetwork( null, concept );
+		}
 	}
 }
 
@@ -215,12 +232,19 @@ function showDataset( dataset ) {
 }
 
 function convertRelatedConcept( relatedConcept ) {
-	var relatedPit = relatedConcept[ 0 ].pit;
-	return {
-		'td.name a': {
-			textContent: relatedPit.name,
-			href: '#pit/' + makeSafe( relatedPit.id )
-		},
-		'td.relation': relatedPit.relation_name
+	var relatedPit = relatedConcept[ 0 ].pit,
+			relationOrg = relatedConcept[ 0 ].relation_org,
+			instructions = {
+				'td.name a': {
+					textContent: relatedPit.name,
+					href: '#pit/' + makeSafe( relatedPit.id )
+				}
+			};
+
+	if( relationOrg ) instructions[ 'td.relation a' ] = {
+		textContent: relationOrg.name,
+		href: '#pit/' + makeSafe( relationOrg.id )
 	};
+
+	return instructions;
 }
