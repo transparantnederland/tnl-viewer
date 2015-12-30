@@ -117,7 +117,11 @@ var pitPropertiesBlacklist = [
 			'etitles',
 			'initials',
 			'tussenv',
-			'firstnames'
+			'firstnames',
+			'contactEmail',
+			'parentId',
+			'internet',
+			'emailadres'
 		];
 
 function showConcept( err, concept, relatedConcepts ) {
@@ -127,14 +131,20 @@ function showConcept( err, concept, relatedConcepts ) {
 	var pit0 = concept[ 0 ].pit,
 			names = [],
 			sources = [],
-			propertiesProcessed = [];
-			propertiesList = [];
+			propertiesProcessed = [],
+			properties = {},
+			propertiesList = [],
+			name;
 
 	concept.forEach( extractShowableData );
 
+	properties.forEach( addProperty );
+
+	name = names.shift();
+
 	var relationLabelText = pit0.type === 'tnl:Person' ? 'Organisatie' : 'Persoon',
 			instructions = {
-				'h2': names.join(', '),
+				'h2': name,
 				'span.sources': sources.map( makeDatasetLink ).join(', '),
 				'table.properties tbody': {
 					template: '#property',
@@ -147,6 +157,10 @@ function showConcept( err, concept, relatedConcepts ) {
 					convert: convertRelatedConcept
 				}
 			};
+
+	if( names.length ) {
+		instructions[ 'p.morenames' ] = '( ' + names.join(', ') + ' )';
+	}
 
 	if( pit0.type === 'tnl:Person' ) {
 		instructions[ 'a.all-relations' ] = {
@@ -174,18 +188,27 @@ function showConcept( err, concept, relatedConcepts ) {
 
 		if( key === 'data' ) return value.forEach( makeTemplateInstructionForProperty );
 
-		var signature = key + '-' + value;
+		var signature = key + '-' + value,
+				propertyValues = properties[ key ] = properties[ key ] || [];
 
 		if( propertiesProcessed.indexOf( signature ) > - 1 ) return;
 
 		propertiesProcessed.push( signature );
 
-		propertiesList.push( {
+		if( propertyValues.indexOf( value ) === -1 ) propertyValues.push( value );
+	}
+
+	function addProperty( key, values ) {
+		return propertiesList.push( {
 			'td.property-name': key,
-			'td.property-value': /^http/.exec( value ) ?
-				'<a href="' + value + '">' + value + '</a>' :
-				value
+			'td.property-value': values.map( ifURLMakeAnchor ).join( ', ' )
 		} );
+
+		function ifURLMakeAnchor( value ) {
+			return /^http/.exec( value ) ?
+				'<a href="' + value + '">' + value + '</a>' :
+				value;
+		}
 	}
 
 	function makeDatasetLink( datasetName ) {

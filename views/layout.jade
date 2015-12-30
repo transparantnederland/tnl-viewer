@@ -18,6 +18,10 @@ html
       li
         h3
           a
+        p.morenames
+          | ( 
+          span.othernames
+          |  )
         p.type
           span.label type:
           span.typetext
@@ -49,10 +53,11 @@ html
           a
 
     template#pit
-      li.pit
+      .pit
         h2
+        p.morenames
         p
-          span.label bron:
+          span.label bronnen:
           span.sources
         table.properties
           tbody

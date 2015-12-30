@@ -89,18 +89,27 @@ function showSearchResults(){
 		var names = [],
 				sources = [],
 				type = concept[ 0 ].pit.type,
-				id = concept[ 0 ].pit.id;
+				id = concept[ 0 ].pit.id,
+				name, instructions;
 
 		concept.forEach( extractShowableData );
 
-		return ul.appendChild( instantiateTemplate( '#searchresult', {
+		name = names.shift();
+
+		instructions = {
 			'h3 a': {
-				textContent: names.join(', '),
+				textContent: name,
 				href: '#pit/' + makeSafe( id )
 			},
 			'span.sourcetext': sources.map( makeDatasetLink ).join(', '),
 			'span.typetext': pitTypesReadableNames[ type ]
-		} ) );
+		};
+
+		if( names.length ) {
+			instructions[ 'span.othernames' ] = names.join(', ');
+		} else instructions[ 'p.morenames' ] = '';
+
+		return ul.appendChild( instantiateTemplate( '#searchresult', instructions ) );
 
 		function extractShowableData( pitContainer ) {
 			var pit = pitContainer.pit;

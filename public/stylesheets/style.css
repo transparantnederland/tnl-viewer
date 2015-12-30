@@ -30,3 +30,7 @@ span.label {
 .disabled {
 	opacity: 0.333;
 }
+
+p.morenames {
+	font-size: .75em;
+}
