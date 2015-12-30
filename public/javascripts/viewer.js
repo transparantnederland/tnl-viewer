@@ -8,6 +8,18 @@ filterableProperties.network = {
 	relatie: 'relation_org.name'
 };
 
+var relationReadableNames = {
+			'tnl:same': 'gelijk',
+			'tnl:parent': 'eigendom',
+			'tnl:related': 'gerelateerd',
+			'tnl:member': 'lid',
+			'tnl:boardmember': 'bestuurslid',
+			'tnl:commissioner': 'commissaris',
+			'tnl:advisor': 'adviseur',
+			'tnl:employee': 'medewerker',
+			'tnl:lobbyist': 'lobbyist'
+		};
+
 filterCallbacks.network = showNetwork;
 
 function clear() {
@@ -248,7 +260,7 @@ function convertRelatedConcept( relatedConcept ) {
 			href: '#pit/' + makeSafe( relationOrg.id )
 		};
 	}else if( relationType ) {
-		instructions[ 'td.relation' ] = relationType;
+		instructions[ 'td.relation' ] = relationReadableNames[ relationType ];
 	}
 
 	return instructions;
