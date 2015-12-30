@@ -12,6 +12,10 @@ filterableProperties[ 'search-results' ] = {
 	bron: 'pit.dataset'
 };
 
+filterCustomLabelDictionairies[ 'search-results' ] = {
+	type: pitTypesReadableNames
+};
+
 filterCallbacks[ 'search-results' ] = showSearchResults;
 
 function searchKeyUp( e ) {
@@ -95,7 +99,7 @@ function showSearchResults(){
 				href: '#pit/' + makeSafe( id )
 			},
 			'span.sourcetext': sources.map( makeDatasetLink ).join(', '),
-			'span.typetext': type
+			'span.typetext': pitTypesReadableNames[ type ]
 		} ) );
 
 		function extractShowableData( pitContainer ) {

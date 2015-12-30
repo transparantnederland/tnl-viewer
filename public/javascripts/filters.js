@@ -1,4 +1,5 @@
 var filterableProperties = {},
+		filterCustomLabelDictionairies = {},
 		filters = {},
 		filterableItems = {},
 		filteredItems = {},
@@ -58,7 +59,9 @@ function updateFilters( items, filterTargetName ) {
 }
 
 function showFilters( filterTargetName ) {
-	var container = document.querySelector( 'ul#filtercontainer' );
+	var container = document.querySelector( 'ul#filtercontainer' ),
+			customLabelDictionairies = filterCustomLabelDictionairies[ filterTargetName ];
+
 	container.innerHTML = '<h3>filter de resultaten:</h3>';
 	
 	return filters[ filterTargetName ].forEach( createAndAppendFilterGroup );
@@ -69,7 +72,8 @@ function showFilters( filterTargetName ) {
 	}
 
 	function createFilterGroup( key, properties ) {
-		var items = properties.map( createFilterItem ),
+		var customLabelDictionairy = customLabelDictionairies && customLabelDictionairies[ key ],
+				items = properties.map( createFilterItem ),
 				filterGroupElement = instantiateTemplate( '#filtergroup', {
 					'h3': key,
 					'ul': {
@@ -95,7 +99,7 @@ function showFilters( filterTargetName ) {
 				'label': {
 					htmlFor: id
 				},
-				'.name': name,
+				'.name': customLabelDictionairy && customLabelDictionairy[ name ] || name,
 				'.count': info.count
 			};
 		}
