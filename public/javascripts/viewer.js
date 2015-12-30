@@ -234,6 +234,7 @@ function showDataset( dataset ) {
 function convertRelatedConcept( relatedConcept ) {
 	var relatedPit = relatedConcept[ 0 ].pit,
 			relationOrg = relatedConcept[ 0 ].relation_org,
+			relationType = relatedConcept[ 0 ].relation_type,
 			instructions = {
 				'td.name a': {
 					textContent: relatedPit.name,
@@ -241,10 +242,14 @@ function convertRelatedConcept( relatedConcept ) {
 				}
 			};
 
-	if( relationOrg ) instructions[ 'td.relation a' ] = {
-		textContent: relationOrg.name,
-		href: '#pit/' + makeSafe( relationOrg.id )
-	};
+	if( relationOrg ) {
+		instructions[ 'td.relation a' ] = {
+			textContent: relationOrg.name,
+			href: '#pit/' + makeSafe( relationOrg.id )
+		};
+	}else if( relationType ) {
+		instructions[ 'td.relation' ] = relationType;
+	}
 
 	return instructions;
 }
