@@ -145,40 +145,66 @@ function instantiateTemplate( templateSelector, data ) {
   }
 }
 
-function resolveOnObject(object, path, value){
+function resolveOnObject( object, path, value ){
   var parts = path.split( '.' ),
       ref = object,
+      correctedParts = [],
       part;
 
-  while( parts.length > 1 && ref){
+  while( parts.length ) {
     part = parts.shift();
-    ref = ref[part];
+
+    while( part[ part.length - 1 ] === '\\' ) {
+      part = part.slice( 0, part.length - 1 ) + '.' + parts.shift();
+    }
+
+    correctedParts.push( part );
   }
 
-  if(!ref) throw('declareOnObject: object does not contain ' + part + ', full path given: ' + path);
+  parts = correctedParts;
 
-  part = parts.shift();
+  while( parts.length > 1 && ref ){
+    part = parts.shift().replace( '\\.', '.' );
+    ref = ref[ part ];
+  }
 
-  if(value !== undefined) ref[part] = value;
+  if( !ref ) throw( 'resolveOnObject: object does not contain ' + part + ', full path given: ' + path );
+
+  part = parts.shift().replace( '\\.', '.' );
+
+  if( value !== undefined ) ref[ part ] = value;
   
-  return ref[part];
+  return ref[ part ];
 }
 
 function unsetOnObject( object, path ) {
   var parts = path.split( '.' ),
       ref = object,
+      correctedParts = [],
       part;
 
-  while( parts.length > 1 && ref){
+  while( parts.length ) {
+    part = parts.shift();
+
+    while( part[ part.length - 1 ] === '\\' ) {
+      part = part.slice( 0, part.length - 1 ) + '.' + parts.shift();
+    }
+
+    correctedParts.push( part );
+  }
+
+  parts = correctedParts;
+
+  while( parts.length > 1 && ref ){
     part = parts.shift();
     ref = ref[part];
   }
 
-  if(!ref) throw('declareOnObject: object does not contain ' + part + ', full path given: ' + path);
+  if( !ref ) throw( 'declareOnObject: object does not contain ' + part + ', full path given: ' + path );
 
   part = parts.shift();
 
-  return delete ref[part];
+  return delete ref[ part ];
 }
 
 function setMenuMargin(){
