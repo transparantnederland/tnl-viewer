@@ -105,25 +105,6 @@ function getRelations( pit, cb ) {
 	);
 }
 
-var pitPropertiesBlacklist = [
-			'id',
-			'dataset',
-			'person',
-			'systemId',
-			'type',
-			'sex',
-			'rank',
-			'titles',
-			'etitles',
-			'initials',
-			'tussenv',
-			'firstnames',
-			'contactEmail',
-			'parentId',
-			'internet',
-			'emailadres'
-		];
-
 function showConcept( err, concept, relatedConcepts ) {
 	if( err ) return showError( err );
 	document.querySelector( 'input#search' ).value = '';

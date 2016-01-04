@@ -34,3 +34,11 @@ span.label {
 p.morenames {
 	font-size: .75em;
 }
+
+table.related-pits thead {
+	font-weight: bold;
+}
+
+table.related-pits td{
+	padding: 0.1em 1em;
+}
