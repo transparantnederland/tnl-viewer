@@ -19,6 +19,7 @@ var pitTypesReadableNames = {
 		},
 		pitPropertiesBlacklist = [
 			'id',
+			'uri',
 			'dataset',
 			'person',
 			'systemId',
