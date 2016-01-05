@@ -39,6 +39,6 @@ table.related-pits thead {
 	font-weight: bold;
 }
 
-table.related-pits td{
+table.related-pits td, table.properties td{
 	padding: 0.1em 1em;
 }
