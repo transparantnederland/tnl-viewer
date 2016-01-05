@@ -42,3 +42,9 @@ table.related-pits thead {
 table.related-pits td, table.properties td{
 	padding: 0.1em 1em;
 }
+
+a.back, a.all-relations, a.details {
+	display: inline-block;
+	margin-bottom: 10px;
+	margin-top: 10px;
+}

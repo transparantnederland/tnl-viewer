@@ -52,17 +52,14 @@ html
         p.website
           a
 
-    template#pit
+    template#concept
       .pit
         h2
         p.morenames
         p
           span.label bronnen:
           span.sources
-        table.properties
-          tbody
-        h3
-          a.all-relations
+        a.details details
         h3 Relaties
         table.related-pits
           thead
@@ -70,6 +67,22 @@ html
               td.type
               td.relation relatie
               //- td.period periode
+          tbody
+        a.all-relations
+
+    template#concept-detail
+      .pit-details
+        h2
+        a.back
+        ul.pits-contained
+
+    template#pit
+      li.pit
+        h3
+        p
+          span.label bron: 
+          span.source
+        table.properties
           tbody
 
     template#property
@@ -88,6 +101,7 @@ html
     template#network
       .pit
         h2
+        a.back
         table.related-pits
           thead
             tr

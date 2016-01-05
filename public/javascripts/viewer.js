@@ -35,6 +35,10 @@ function pitHandler( routeParts ) {
 			);
 		}
 
+		if( routeParts[ 1 ] === 'details' ) {
+			return showConceptDetails( err, concept );
+		}
+
 		function gotRelations( err, relatedConcepts ) {
 			showConcept( err, concept, relatedConcepts );
 		}
@@ -119,7 +123,7 @@ function showConcept( err, concept, relatedConcepts ) {
 
 	concept.forEach( extractShowableData );
 
-	properties.forEach( addProperty );
+	//properties.forEach( addProperty );
 
 	name = names.shift();
 
@@ -127,15 +131,14 @@ function showConcept( err, concept, relatedConcepts ) {
 			instructions = {
 				'h2': name,
 				'span.sources': sources.map( makeDatasetLink ).join(', '),
-				'table.properties tbody': {
-					template: '#property',
-					list: propertiesList
-				},
 				'table.related-pits thead td.type': relationLabelText,
 				'table.related-pits tbody': {
 					template: '#relation',
 					list: relatedConcepts,
 					convert: convertRelatedConcept
+				},
+				'a.details': {
+					href: '#pit/' + makeSafe( pit0.id ) + '/details'
 				}
 			};
 
@@ -150,46 +153,78 @@ function showConcept( err, concept, relatedConcepts ) {
 		};
 	}
 
-	var pitElement = instantiateTemplate( '#pit', instructions );
+	var conceptElement = instantiateTemplate( '#concept', instructions );
 
 	clearScreen();
 
-	return document.querySelector( 'table#search-table td.result' ).appendChild( pitElement );
+	return document.querySelector( 'table#search-table td.result' ).appendChild( conceptElement );
 
 	function extractShowableData( pitContainer ) {
 		var pit = pitContainer.pit;
 
 		if( names.indexOf( pit.name ) === -1 ) names.push( pit.name );
 		if( sources.indexOf( pit.dataset ) === -1 ) sources.push( pit.dataset );
-		pit.forEach( makeTemplateInstructionForProperty );
 	}
 
-	function makeTemplateInstructionForProperty( key, value ) {
-		if( pitPropertiesBlacklist.indexOf( key ) > -1 ) return;
-
-		if( key === 'data' ) return value.forEach( makeTemplateInstructionForProperty );
-
-		var signature = key + '-' + value,
-				propertyValues = properties[ key ] = properties[ key ] || [];
-
-		if( propertiesProcessed.indexOf( signature ) > - 1 ) return;
-
-		propertiesProcessed.push( signature );
-
-		if( propertyValues.indexOf( value ) === -1 ) propertyValues.push( value );
+	function makeDatasetLink( datasetName ) {
+		return '<a href="#dataset/' + datasetName + '">' + datasetName + '</a>';
 	}
+}
 
-	function addProperty( key, values ) {
-		return propertiesList.push( {
-			'td.property-name': key,
-			'td.property-value': values.map( ifURLMakeAnchor ).join( ', ' )
-		} );
+function showConceptDetails( err, concept ) {
+	if( err ) return showError( err );
 
-		function ifURLMakeAnchor( value ) {
-			return /^http/.exec( value ) ?
-				'<a href="' + value + '">' + value + '</a>' :
-				value;
+	var encounteredSources = [],
+			instructions = {
+				'h2': concept[ 0 ].pit.name,
+				'a.back': {
+					href: '#pit/' + makeSafe( concept[ 0 ].pit.id ),
+					textContent: 'terug naar ' + ( concept[ 0 ].pit.type === 'tnl:Person' ? 'persoon' : 'organisatie' )
+				},
+				'ul.pits-contained': {
+					template: '#pit',
+					list: concept.filter( sourceNotEncounteredYetPredicate ),
+					convert: function( pitContainer ) {
+						var pit = pitContainer.pit;
+
+						return {
+							'h3': pit.name,
+							'span.source': makeDatasetLink( pit.dataset ),
+							'table.properties tbody': {
+								template: '#property',
+								list: Object.keys( pit ),
+								convert: function( key ) {
+									return {
+										'td.property-name': key,
+										'td.property-value': ifURLMakeAnchor( pit[ key ] )
+									};
+								}
+							}
+						};
+					}
+				}
+			};
+
+	var conceptElement = instantiateTemplate( '#concept-detail', instructions );
+
+	clearScreen();
+
+	return document.querySelector( 'table#search-table td.result' ).appendChild( conceptElement );
+
+	function sourceNotEncounteredYetPredicate( pitContainer ) {
+		var source = pitContainer.pit.dataset;
+		if( encounteredSources.indexOf( source ) === -1 ) {
+			encounteredSources.push( source );
+			return true;
 		}
+
+		return false;
+	}
+
+	function ifURLMakeAnchor( value ) {
+		return /^http/.exec( value ) ?
+			'<a href="' + value + '">' + value + '</a>' :
+			value;
 	}
 
 	function makeDatasetLink( datasetName ) {
@@ -209,6 +244,10 @@ function showNetwork( err, concept ) {
 	var container = document.querySelector( 'table#search-table td.result' ),
 			networkElement = instantiateTemplate( '#network', {
 		'h2': concept[ 0 ].pit.name,
+		'a.back': {
+			href: '#pit/' + makeSafe( concept[ 0 ].pit.id ),
+			textContent: 'terug naar persoon'
+		},
 		'table.related-pits tbody': {
 			template: '#relation',
 			list: filteredItems.network,
