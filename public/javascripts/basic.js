@@ -207,6 +207,10 @@ function unsetOnObject( object, path ) {
   return delete ref[ part ];
 }
 
+function identity( value ) {
+  return value;
+}
+
 function setMenuMargin(){
   var headerHeight = document.querySelector('.searchSection').offsetHeight;
   document.querySelector(".filtertd").style.marginTop = headerHeight + 'px';

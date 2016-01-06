@@ -60,11 +60,17 @@ function updateFilters( items, filterTargetName ) {
 
 function showFilters( filterTargetName ) {
 	var container = document.querySelector( 'ul#filtercontainer' ),
-			customLabelDictionairies = filterCustomLabelDictionairies[ filterTargetName ];
+			customLabelDictionairies = filterCustomLabelDictionairies[ filterTargetName ],
+			filterGroupElements;
+	
+	filterGroupElements = filters[ filterTargetName ].map( createFilterGroup ).filter( identity );
+
+	if( !filterGroupElements.length ) {
+		return container.innerText = '';
+	}
 
 	container.innerHTML = '<h3>filter de resultaten:</h3>';
-	
-	return filters[ filterTargetName ].forEach( createAndAppendFilterGroup );
+	return filterGroupElements.forEach( container.appendChild.bind( container ) );
 
 	function createAndAppendFilterGroup( key, filter ) {
 		var filterGroup = createFilterGroup( key, filter );
