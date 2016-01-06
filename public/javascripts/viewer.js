@@ -185,22 +185,32 @@ function showConceptDetails( err, concept ) {
 					template: '#pit',
 					list: concept.filter( sourceNotEncounteredYetPredicate ),
 					convert: function( pitContainer ) {
-						var pit = pitContainer.pit;
+						var pit = pitContainer.pit,
+								properties = [];
+
+						Object.keys( pit ).forEach( createExtractPropertyFunction( pit ) );
 
 						return {
 							'h3': pit.name,
 							'span.source': makeDatasetLink( pit.dataset ),
 							'table.properties tbody': {
 								template: '#property',
-								list: Object.keys( pit ),
-								convert: function( key ) {
-									return {
-										'td.property-name': key,
-										'td.property-value': ifURLMakeAnchor( pit[ key ] )
-									};
-								}
+								list: properties
 							}
 						};
+
+						function createExtractPropertyFunction( object ) {
+							return function extractProperty ( key ) {
+								var value = object[ key ];
+								if( typeof value === 'object' ) return Object.keys( value).forEach( createExtractPropertyFunction( value ) );
+
+								properties.push( {
+									'td.property-name': key,
+									'td.property-value': ifURLMakeAnchor( value )
+								} );
+							};
+						}
+
 					}
 				}
 			};

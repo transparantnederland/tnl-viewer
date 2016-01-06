@@ -2,7 +2,8 @@ var searchResults;
 
 eventHandlers[ 'input#search' ] = {
 	keyup: searchKeyUp,
-	blur: searchBlur
+	blur: searchBlur,
+	focus: searchFocus
 };
 
 routeHandlers.search = searchHandler;
@@ -24,6 +25,7 @@ function searchKeyUp( e ) {
 	document.body.scrollTop = 0;
 
 	if( e.keyCode === 13 ) {
+		document.querySelector( 'input#search' ).blur();
 		return search();
 	}
 
@@ -42,8 +44,13 @@ function searchBlur() {
 	replaceHash( hash, true );
 }
 
+function searchFocus() {
+	document.querySelector( 'input#search' ).value = '';
+}
+
 function searchHandler( routeParts ) {
 	var searchQuery = makeUri( routeParts.pop() );
+
 	search( '*', searchQuery );
 }
 
@@ -101,8 +108,9 @@ function showSearchResults(){
 				textContent: name,
 				href: '#pit/' + makeSafe( id )
 			},
-			'span.sourcetext': sources.map( makeDatasetLink ).join(', '),
-			'span.typetext': pitTypesReadableNames[ type ]
+			'p.type': pitTypesReadableNames[ type ],
+			'p.source span.label': ( sources.length === 1 ? 'bron' : 'bronnen' ) + ': ',
+			'p.source span.sourcetext': sources.map( makeDatasetLink ).join(', ')
 		};
 
 		if( names.length ) {
